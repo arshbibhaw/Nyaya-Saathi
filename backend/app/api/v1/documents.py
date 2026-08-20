@@ -27,9 +27,9 @@ async def get_document(
     return {
         "id": f"doc-{uuid.uuid4()}",
         "case_id": case_id,
-        "doc_type": "Legal Notice",
-        "content": "This is a mock legal notice for unpaid wages...",
-        "created_at": "2023-10-15T12:00:00Z"
+        "doc_type": "Cyber Complaint Draft",
+        "content": "To the Cyber Cell,\n\nI am writing to report a fraudulent transaction of ₹20,000 on 18 Aug 2026...",
+        "created_at": "2026-08-18T15:00:00Z"
     }
 
 
@@ -46,8 +46,8 @@ async def generate_document(
         "id": f"doc-{uuid.uuid4()}",
         "case_id": case_id,
         "doc_type": doc_in.doc_type,
-        "content": f"This is a mock generated {doc_in.doc_type} based on your case details. Please review and edit as needed.",
-        "created_at": "2023-10-15T12:00:00Z"
+        "content": f"This is a mock generated {doc_in.doc_type} for your cyber fraud complaint. Please review and edit.",
+        "created_at": "2026-08-18T15:00:00Z"
     }
 
 
@@ -58,25 +58,35 @@ async def get_action_plan(
     current_user: User = Depends(get_current_user)
 ):
     """Fetch the generated action plan for the case."""
-    # Mock response
+    # Mock response for Cyber Financial Fraud demo
     return {
         "case_id": case_id,
         "plan_status": "generated",
         "steps": [
             {
                 "step": 1,
-                "title": "Gather all employment contracts and bank statements.",
-                "description": "Ensure you have proof of employment and missing deposits."
+                "title": "Preserve transaction evidence",
+                "description": "Ensure you have screenshots of the transaction and communication.",
+                "status": "completed"
             },
             {
                 "step": 2,
-                "title": "Send a formal legal notice.",
-                "description": "Use the document generator to draft a notice for unpaid dues under the Payment of Wages Act."
+                "title": "Collect communication records",
+                "description": "Gather call logs or messages from the impersonator.",
+                "status": "completed"
             },
             {
                 "step": 3,
-                "title": "File a complaint with the Labour Commissioner.",
-                "description": "If the notice is ignored for 15 days, escalate to the local labour office."
+                "title": "Report the incident",
+                "description": "File a complaint on the National Cyber Crime Reporting Portal.",
+                "status": "current",
+                "link": "https://cybercrime.gov.in"
+            },
+            {
+                "step": 4,
+                "title": "Prepare supporting documents",
+                "description": "Draft a formal complaint letter to your bank.",
+                "status": "waiting"
             }
         ]
     }

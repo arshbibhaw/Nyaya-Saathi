@@ -23,12 +23,12 @@ async def upload_evidence(
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
 
-    # Mock extraction based on API contract
+    # Mock extraction for Cyber Financial Fraud demo
     return {
         "evidence_id": f"ev-{uuid.uuid4()}",
         "extracted_entities": {
-            "dates": ["2023-10-01", "2023-12-01"],
-            "amounts": ["₹50,000"],
-            "parties": ["Employee", "Employer Ltd."]
+            "dates": ["18 Aug 2026"],
+            "amounts": ["₹20,000"],
+            "parties": ["Victim", "Impersonator"]
         }
     }

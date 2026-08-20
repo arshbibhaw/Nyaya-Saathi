@@ -38,14 +38,14 @@ async def send_message(
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
 
-    # Mock response
+    # Mock response for Cyber Financial Fraud demo
     return {
-        "reply": f"I understand your issue regarding: '{chat_in.message}'. Based on the Payment of Wages Act, 1936, you have the right to claim your unpaid wages. Should we draft a legal notice?",
+        "reply": f"I understand your issue regarding: '{chat_in.message}'. Based on the Information Technology Act, 2000, specifically Section 66D (Cheating by personation by using computer resource), you should immediately report this fraudulent transaction. We have added this to your action plan. Would you like me to help you draft the complaint?",
         "citations": [
             {
                 "id": "cit-1",
-                "text": "Payment of Wages Act, 1936 - Section 15",
-                "relevance": 0.95
+                "text": "Information Technology Act, 2000 - Section 66D",
+                "relevance": 0.98
             }
         ]
     }

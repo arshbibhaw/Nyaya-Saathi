@@ -9,7 +9,70 @@ from app.models.user import User
 from app.schemas.case import CaseCreate, CaseOut
 from app.core.security import get_current_user
 
+from datetime import datetime
+
 router = APIRouter()
+
+def get_demo_case_data(case_id: str, created_at: datetime):
+    return {
+        "caseId": case_id,
+        "category": "Cyber Financial Fraud",
+        "jurisdiction": {
+            "country": "India",
+            "state": "Maharashtra"
+        },
+        "summary": "You reported that ₹20,000 was transferred after a person impersonated a bank representative.",
+        "priority": "High",
+        "status": "Active",
+        "created_at": created_at,
+        "evidence": [
+            {
+                "id": "ev-1",
+                "filename": "transaction_screenshot.png",
+                "date": "18 Aug 2026",
+                "insights": ["Amount: ₹20,000", "Transaction: TXN••••9281", "Date: 18 Aug 2026"]
+            }
+        ],
+        "sources": [
+            {
+                "id": "src-1",
+                "type": "Official government source",
+                "name": "India Code",
+                "provision": "Information Technology Act, 2000 - Section 66D",
+                "explanation": "Provides punishment for cheating by personation by using computer resource."
+            }
+        ],
+        "actionPlan": [
+            {
+                "step": 1,
+                "title": "Preserve transaction evidence",
+                "status": "completed"
+            },
+            {
+                "step": 2,
+                "title": "Collect communication records",
+                "status": "completed"
+            },
+            {
+                "step": 3,
+                "title": "Report the incident",
+                "status": "current",
+                "explanation": "File a complaint on the National Cyber Crime Reporting Portal.",
+                "link": "https://cybercrime.gov.in"
+            },
+            {
+                "step": 4,
+                "title": "Prepare supporting documents",
+                "status": "waiting"
+            }
+        ],
+        "timeline": [
+            {"time": "18 Aug · 14:55", "event": "Case created"},
+            {"time": "18 Aug · 15:01", "event": "Legal sources retrieved"},
+            {"time": "18 Aug · 15:04", "event": "Evidence files analyzed"},
+            {"time": "18 Aug · 15:07", "event": "Action plan generated"}
+        ]
+    }
 
 
 @router.get("/", response_model=List[CaseOut])
@@ -19,7 +82,8 @@ async def list_cases(
 ):
     """List all cases for the current user."""
     cases = db.query(Case).filter(Case.user_id == current_user.id).all()
-    return cases
+    # Mock return for demo
+    return [get_demo_case_data(case.case_id, case.created_at) for case in cases]
 
 
 @router.post("/", response_model=CaseOut)
@@ -38,7 +102,7 @@ async def create_case(
     db.add(new_case)
     db.commit()
     db.refresh(new_case)
-    return new_case
+    return get_demo_case_data(new_case.case_id, new_case.created_at)
 
 
 @router.get("/{case_id}", response_model=CaseOut)
@@ -51,4 +115,4 @@ async def get_case(
     case = db.query(Case).filter(Case.case_id == case_id, Case.user_id == current_user.id).first()
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
-    return case
+    return get_demo_case_data(case.case_id, case.created_at)
