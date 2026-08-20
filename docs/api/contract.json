@@ -1,0 +1,54 @@
+{
+  "api_version": "v1",
+  "base_url": "/api/v1",
+  "endpoints": {
+    "POST /cases/": {
+      "description": "Initialize a new case from natural language input.",
+      "request": {
+        "initial_issue": "My employer hasn't paid me for 3 months."
+      },
+      "response": {
+        "case_id": "uuid-1234",
+        "domain": "Employment Law",
+        "issue": "Unpaid Wages",
+        "status": "pending_evidence"
+      }
+    },
+    "POST /cases/{case_id}/evidence": {
+      "description": "Upload a PDF or image as evidence.",
+      "request": "multipart/form-data (file)",
+      "response": {
+        "evidence_id": "ev-5678",
+        "extracted_entities": {
+          "dates": ["2023-10-01", "2023-12-01"],
+          "amounts": ["₹50,000"],
+          "parties": ["Employee", "Employer Ltd."]
+        }
+      }
+    },
+    "GET /cases/{case_id}/plan": {
+      "description": "Fetch the generated action plan for the case.",
+      "response": {
+        "case_id": "uuid-1234",
+        "plan_status": "generated",
+        "steps": [
+          {
+            "step": 1,
+            "title": "Gather all employment contracts and bank statements.",
+            "description": "Ensure you have proof of employment and missing deposits."
+          },
+          {
+            "step": 2,
+            "title": "Send a formal legal notice.",
+            "description": "Use the document generator to draft a notice for unpaid dues under the Payment of Wages Act."
+          },
+          {
+            "step": 3,
+            "title": "File a complaint with the Labour Commissioner.",
+            "description": "If the notice is ignored for 15 days, escalate to the local labour office."
+          }
+        ]
+      }
+    }
+  }
+}
