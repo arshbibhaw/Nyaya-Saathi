@@ -5,12 +5,13 @@ import Link from "next/link";
 import { 
   Plus, 
   FolderOpen, 
-  CheckCircle2, 
   Clock, 
   AlertCircle,
   FileText,
   Upload,
-  ArrowRight
+  ArrowRight,
+  MoreVertical,
+  Briefcase
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { useCaseStore } from "@/store/case-store";
 import type { Case } from "@/lib/types";
+import { format } from "date-fns";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -30,7 +32,6 @@ export default function DashboardPage() {
   }, [fetchCases]);
 
   const activeCases = cases.filter(c => c.status !== "resolved" && c.status !== "escalated").length;
-  const resolvedCases = cases.filter(c => c.status === "resolved").length;
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -42,15 +43,14 @@ export default function DashboardPage() {
   const getStatusBadge = (status: Case["status"]) => {
     switch (status) {
       case "open":
-        return <Badge className="bg-primary/20 text-primary hover:bg-primary/30 border-none">Open</Badge>;
-      case "pending_evidence":
-        return <Badge className="bg-warning/20 text-warning hover:bg-warning/30 border-none">Needs Evidence</Badge>;
       case "analyzing":
-        return <Badge className="bg-primary/20 text-primary hover:bg-primary/30 border-none">Analyzing</Badge>;
+        return <Badge variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-200">Active</Badge>;
+      case "pending_evidence":
+        return <Badge variant="outline" className="text-amber-700 border-amber-200 bg-amber-50">Action Required</Badge>;
       case "plan_generated":
-        return <Badge className="bg-accent/20 text-accent hover:bg-accent/30 border-none">Plan Ready</Badge>;
+        return <Badge variant="outline" className="text-emerald-700 border-emerald-200 bg-emerald-50">Plan Ready</Badge>;
       case "resolved":
-        return <Badge className="bg-success/20 text-success hover:bg-success/30 border-none">Resolved</Badge>;
+        return <Badge variant="secondary" className="bg-slate-100 text-slate-500">Completed</Badge>;
       case "escalated":
         return <Badge variant="destructive">Escalated</Badge>;
       default:
@@ -58,154 +58,138 @@ export default function DashboardPage() {
     }
   };
 
+  // Mock activity timeline
+  const activities = [
+    { id: 1, action: "Case created", case: "Cyber Financial Fraud", time: "2 hours ago" },
+    { id: 2, action: "Evidence uploaded", case: "Cyber Financial Fraud", time: "2 hours ago" },
+    { id: 3, action: "Action plan generated", case: "Employment Dispute", time: "1 day ago" },
+  ];
+
   return (
-    <div className="space-y-8 animate-slide-up">
-      {/* Welcome Section */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">
-          {getGreeting()}, {user?.full_name?.split(" ")[0] || "User"}
-        </h1>
-        <p className="text-muted-foreground">
-          Here is an overview of your legal matters.
-        </p>
+    <div className="mx-auto max-w-5xl space-y-8 p-6 md:p-8">
+      {/* Header */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            {getGreeting()}, {user?.full_name?.split(" ")[0] || "User"}
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            You have {activeCases} active matters requiring attention.
+          </p>
+        </div>
+        <Link href="/cases/new">
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm gap-2">
+            <Plus className="size-4" />
+            New Matter
+          </Button>
+        </Link>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="glass-card border-none bg-primary/5">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Cases
-            </CardTitle>
-            <FolderOpen className="size-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-12" /> : cases.length}</div>
-          </CardContent>
-        </Card>
-        
-        <Card className="glass-card border-none bg-warning/5">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Active Issues
-            </CardTitle>
-            <Clock className="size-4 text-warning" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-12" /> : activeCases}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card border-none bg-success/5">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Resolved
-            </CardTitle>
-            <CheckCircle2 className="size-4 text-success" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-12" /> : resolvedCases}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Cases List */}
-      <div>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold tracking-tight">Recent Cases</h2>
-          {cases.length > 0 && (
-            <Link href="/cases/new">
-              <Button variant="outline" size="sm" className="gap-1">
-                <Plus className="size-4" />
-                New Case
-              </Button>
-            </Link>
-          )}
+      <div className="grid gap-6 md:grid-cols-3">
+        {/* Cases List */}
+        <div className="md:col-span-2 space-y-6">
+          <div className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div className="border-b border-slate-200 bg-slate-50/50 px-6 py-4">
+              <h2 className="text-base font-semibold text-slate-900">Active Matters</h2>
+            </div>
+            
+            <div className="divide-y divide-slate-100">
+              {isLoading ? (
+                <div className="p-6 space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-16 w-full rounded-md" />
+                  ))}
+                </div>
+              ) : cases.length > 0 ? (
+                cases.map((c) => (
+                  <Link key={c.case_id} href={`/cases/${c.case_id}/chat`} className="block hover:bg-slate-50 transition-colors">
+                    <div className="flex items-center justify-between px-6 py-4">
+                      <div className="flex items-start gap-4">
+                        <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500">
+                          <Briefcase className="size-4" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-slate-900 text-sm">
+                              {/* Using hackathon mock category if present or fallback */}
+                              {"Cyber Financial Fraud" || c.domain}
+                            </span>
+                            {getStatusBadge(c.status)}
+                          </div>
+                          <p className="text-sm text-slate-500 line-clamp-1 max-w-md">
+                            {c.issue}
+                          </p>
+                          <div className="mt-2 flex items-center gap-4 text-xs text-slate-400 font-medium">
+                            <span>ID: {c.case_id.split('-')[0].toUpperCase()}</span>
+                            <span>•</span>
+                            <span>{format(new Date(c.created_at), 'MMM d, yyyy')}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <ArrowRight className="size-4 text-slate-300" />
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center p-12 text-center">
+                  <FolderOpen className="size-8 text-slate-300 mb-3" />
+                  <h3 className="text-sm font-medium text-slate-900">No active matters</h3>
+                  <p className="mt-1 text-sm text-slate-500">Get started by creating a new case.</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-24 w-full rounded-xl opacity-20" />
-            ))}
-          </div>
-        ) : cases.length > 0 ? (
-          <div className="grid gap-4">
-            {cases.map((c) => (
-              <Link key={c.case_id} href={`/cases/${c.case_id}/chat`}>
-                <Card className="glass-card group cursor-pointer border-none transition-all hover:bg-surface-glass-hover hover:shadow-md">
-                  <CardContent className="flex items-center justify-between p-6">
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center gap-3">
-                        <span className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                          {c.domain}
-                        </span>
-                        {getStatusBadge(c.status)}
-                      </div>
-                      <p className="text-sm text-muted-foreground line-clamp-1">
-                        {c.issue}
-                      </p>
-                      <span className="text-xs text-muted-foreground opacity-70">
-                        {new Date(c.created_at).toLocaleDateString()}
-                      </span>
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Recent Activity */}
+          <Card className="border-slate-200 shadow-sm">
+            <CardHeader className="border-b border-slate-100 pb-3">
+              <CardTitle className="text-sm font-semibold text-slate-900">Recent Activity</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="space-y-4">
+                {activities.map((act, i) => (
+                  <div key={act.id} className="flex gap-3">
+                    <div className="relative mt-1 flex h-full flex-col items-center">
+                      <div className="size-2 rounded-full bg-blue-600" />
+                      {i !== activities.length - 1 && (
+                        <div className="absolute top-3 bottom-[-16px] w-px bg-slate-200" />
+                      )}
                     </div>
-                    <ArrowRight className="size-5 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <Card className="glass-card flex flex-col items-center justify-center p-12 text-center border-dashed border-2">
-            <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-primary/10">
-              <FolderOpen className="size-8 text-primary" />
-            </div>
-            <h3 className="mb-2 text-xl font-semibold">No cases yet</h3>
-            <p className="mb-6 max-w-sm text-sm text-muted-foreground">
-              Create a new case by describing your legal problem, and our AI will guide you through the process.
-            </p>
-            <Link href="/cases/new">
-              <Button className="glow-indigo gap-2">
-                <Plus className="size-4" />
-                Create Your First Case
-              </Button>
-            </Link>
+                    <div className="pb-2">
+                      <p className="text-sm font-medium text-slate-900">{act.action}</p>
+                      <p className="text-xs text-slate-500">{act.case}</p>
+                      <p className="mt-1 text-xs font-medium text-slate-400">{act.time}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
           </Card>
-        )}
-      </div>
 
-      {/* Quick Actions */}
-      <div>
-        <h2 className="mb-4 text-xl font-semibold tracking-tight">Quick Actions</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Link href="/cases/new">
-            <Button variant="outline" className="w-full justify-start gap-3 h-14 glass-hover border-border/50">
-              <div className="flex size-8 items-center justify-center rounded-md bg-primary/10 text-primary">
-                <Plus className="size-4" />
-              </div>
-              New Legal Issue
-            </Button>
-          </Link>
-          <Button variant="outline" className="w-full justify-start gap-3 h-14 glass-hover border-border/50">
-            <div className="flex size-8 items-center justify-center rounded-md bg-accent/10 text-accent">
-              <Upload className="size-4" />
-            </div>
-            Upload Evidence
-          </Button>
-          <Link href="/dashboard/plans">
-            <Button variant="outline" className="w-full justify-start gap-3 h-14 glass-hover border-border/50">
-              <div className="flex size-8 items-center justify-center rounded-md bg-success/10 text-success">
-                <FileText className="size-4" />
-              </div>
-              View Action Plans
-            </Button>
-          </Link>
-          <Button variant="outline" className="w-full justify-start gap-3 h-14 glass-hover border-border/50">
-            <div className="flex size-8 items-center justify-center rounded-md bg-warning/10 text-warning">
-              <AlertCircle className="size-4" />
-            </div>
-            Get Help
-          </Button>
+          {/* Quick Links */}
+          <Card className="border-slate-200 shadow-sm">
+            <CardHeader className="border-b border-slate-100 pb-3">
+              <CardTitle className="text-sm font-semibold text-slate-900">Quick Links</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-2 px-2">
+              <nav className="flex flex-col gap-1">
+                <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                  <Upload className="mr-3 size-4 text-slate-400" /> Upload Evidence
+                </Button>
+                <Link href="/dashboard/plans">
+                  <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                    <FileText className="mr-3 size-4 text-slate-400" /> View Action Plans
+                  </Button>
+                </Link>
+                <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                  <AlertCircle className="mr-3 size-4 text-slate-400" /> Legal Resources
+                </Button>
+              </nav>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
