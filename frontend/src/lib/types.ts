@@ -17,7 +17,7 @@ export interface UserOut {
 // ── Cases ───────────────────────────────────────────────────────────────────
 
 export interface Case {
-  case_id: string;
+  id: string;
   domain: string;
   issue: string;
   status: CaseStatus;
