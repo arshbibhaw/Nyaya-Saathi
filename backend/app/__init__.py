@@ -1,0 +1,1 @@
+"""Nyaya Saathi Backend Application."""
