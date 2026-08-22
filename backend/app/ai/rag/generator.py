@@ -35,40 +35,38 @@ def generate_response(
         actual LLM call.  Use ``GENERATOR_PROMPT`` as the system
         message and inject *context* into the prompt.
     """
-    # TODO: Replace with actual LLM call
-    #
-    # from openai import OpenAI
-    # from app.core.config import settings
-    #
-    # client = OpenAI(api_key=settings.LLM_API_KEY)
-    #
-    # context_str = "\n\n".join(
-    #     f"[Source: {c['title']}]\n{c['chunk_text']}" for c in context
-    # )
-    #
-    # messages = [
-    #     {"role": "system", "content": GENERATOR_PROMPT.format(context=context_str)},
-    #     *case_history,
-    #     {"role": "user", "content": query},
-    # ]
-    #
-    # response = client.chat.completions.create(
-    #     model=settings.LLM_MODEL,
-    #     messages=messages,
-    # )
-    # return response.choices[0].message.content
+    import os
+    from openai import OpenAI
+    
+    # Simple synchronous OpenAI client
+    api_key = os.getenv("LLM_API_KEY", os.getenv("OPENAI_API_KEY"))
+    
+    if not api_key:
+        return "System error: LLM_API_KEY environment variable is not configured."
 
-    if context:
-        sources_text = ", ".join(c.get("title", "Unknown") for c in context)
-        return (
-            f"Based on your query, I found relevant information from: {sources_text}. "
-            f"[This is a placeholder response. The AI teammate should implement "
-            f"the actual LLM call in app/ai/rag/generator.py]"
-        )
-
-    return (
-        "Thank you for sharing the details of your situation. "
-        "I understand this can be stressful. Let me help you understand your options. "
-        "[This is a placeholder response. The AI teammate should implement "
-        "the actual LLM call in app/ai/rag/generator.py]"
+    client = OpenAI(api_key=api_key)
+    
+    context_str = "\n\n".join(
+        f"[Source: {c.get('title', 'Unknown')}]\n{c.get('chunk_text', '')}" 
+        for c in context
     )
+    
+    messages = [
+        {"role": "system", "content": GENERATOR_PROMPT.format(context=context_str)},
+    ]
+    
+    # Append case history
+    messages.extend(case_history)
+    
+    # Append current user query
+    messages.append({"role": "user", "content": query})
+    
+    try:
+        response = client.chat.completions.create(
+            model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
+            messages=messages,
+            temperature=0.3,
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"I encountered an error while trying to process your request: {e}"
