@@ -1,18 +1,15 @@
 """
-Aggregated API v1 router.
-
-Import and include all domain-specific routers here.
+Aggregate all v1 sub-routers into a single router mounted at /api/v1.
 """
 
 from fastapi import APIRouter
 
-from app.api.v1 import cases, chat, documents, evidence, auth
+from app.api.v1 import auth, cases, evidence, plans, documents
 
-api_router = APIRouter()
+router = APIRouter(prefix="/api/v1")
 
-api_router.include_router(auth.router, prefix="/auth", tags=["Auth"])
-api_router.include_router(cases.router, prefix="/cases", tags=["Cases"])
-# We will fix the other routers' prefixes to match frontend (under cases/{caseId}) in a bit.
-api_router.include_router(chat.router, prefix="/cases/{case_id}/chat", tags=["Chat"])
-api_router.include_router(evidence.router, prefix="/cases/{case_id}/evidence", tags=["Evidence"])
-api_router.include_router(documents.router, prefix="/cases/{case_id}", tags=["Documents/Plan"])
+router.include_router(auth.router)
+router.include_router(cases.router)
+router.include_router(evidence.router)
+router.include_router(plans.router)
+router.include_router(documents.router)

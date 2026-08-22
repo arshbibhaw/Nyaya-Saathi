@@ -1,50 +1,55 @@
-"""Auth route handlers."""
+"""
+Authentication routes: register and login.
+"""
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.db import get_db
+
+from app.api.dependencies import get_db
+from app.core.security import create_access_token, hash_password, verify_password
 from app.models.user import User
-from app.schemas.user import UserCreate
-from app.schemas.auth import AuthResponse
-from app.core.security import verify_password, get_password_hash, create_access_token
+from app.schemas.user import UserCreate, UserLogin, TokenResponse, UserResponse
 
-router = APIRouter()
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-@router.post("/register", response_model=AuthResponse)
-async def register(user_in: UserCreate, db: Session = Depends(get_db)):
-    """Register a new user."""
-    user = db.query(User).filter(User.email == user_in.email).first()
-    if user:
+@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+def register(payload: UserCreate, db: Session = Depends(get_db)):
+    """Create a new user account and return a JWT."""
+    existing = db.query(User).filter(User.email == payload.email).first()
+    if existing:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email already registered",
         )
-    
-    hashed_password = get_password_hash(user_in.password)
-    new_user = User(
-        email=user_in.email,
-        hashed_password=hashed_password,
-        full_name=user_in.full_name
+
+    user = User(
+        email=payload.email,
+        password_hash=hash_password(payload.password),
     )
-    db.add(new_user)
+    db.add(user)
     db.commit()
-    db.refresh(new_user)
-    
-    access_token = create_access_token(data={"sub": str(new_user.id)})
-    return {"token": access_token, "user": new_user}
+    db.refresh(user)
+
+    token = create_access_token({"sub": user.id})
+    return TokenResponse(
+        access_token=token,
+        user=UserResponse.model_validate(user),
+    )
 
 
-@router.post("/login", response_model=AuthResponse)
-async def login(user_in: UserCreate, db: Session = Depends(get_db)):
-    """Authenticate user."""
-    user = db.query(User).filter(User.email == user_in.email).first()
-    if not user or not verify_password(user_in.password, user.hashed_password):
+@router.post("/login", response_model=TokenResponse)
+def login(payload: UserLogin, db: Session = Depends(get_db)):
+    """Authenticate a user and return a JWT."""
+    user = db.query(User).filter(User.email == payload.email).first()
+    if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="Invalid email or password",
         )
-    
-    access_token = create_access_token(data={"sub": str(user.id)})
-    return {"token": access_token, "user": user}
+
+    token = create_access_token({"sub": user.id})
+    return TokenResponse(
+        access_token=token,
+        user=UserResponse.model_validate(user),
+    )

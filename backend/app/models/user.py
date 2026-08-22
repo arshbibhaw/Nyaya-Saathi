@@ -1,17 +1,25 @@
-"""User model."""
+"""User ORM model."""
 
-from sqlalchemy import Column, Integer, String, DateTime
-from sqlalchemy.sql import func
+import uuid
+from datetime import datetime, timezone
 
-from app.db import Base
+from sqlalchemy import String, DateTime
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.db.session import Base
 
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    full_name = Column(String, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+    )
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
+    # Relationships
+    cases = relationship("Case", back_populates="user", cascade="all, delete-orphan")
