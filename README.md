@@ -101,7 +101,7 @@ cd backend
 python -m venv .venv
 # Activate virtual env (Windows: .venv\Scripts\activate | Mac/Linux: source .venv/bin/activate)
 pip install -r requirements.txt
-uvicorn app.main:app --reload
+uvicorn main:app --reload
 ```
 
 *(Alternatively, use `docker-compose up` once the infrastructure is configured).*
