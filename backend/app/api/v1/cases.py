@@ -1,118 +1,79 @@
-"""Cases route handlers — CRUD for legal cases."""
+"""
+Case routes: create, list, get, and chat.
+"""
 
-from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.db import get_db
-from app.models.case import Case
+
+from app.api.dependencies import get_db, get_current_user
 from app.models.user import User
-from app.schemas.case import CaseCreate, CaseOut
-from app.core.security import get_current_user
+from app.models.case import Case
+from app.models.case_question import CaseQuestion
+from app.schemas.case import CaseCreate, CaseResponse, ChatMessage, ChatResponse
+from app.services.case_service import classify_and_create_case, handle_chat
 
-from datetime import datetime
-
-router = APIRouter()
-
-def get_demo_case_data(case_id: str, created_at: datetime):
-    return {
-        "caseId": case_id,
-        "category": "Cyber Financial Fraud",
-        "jurisdiction": {
-            "country": "India",
-            "state": "Maharashtra"
-        },
-        "summary": "You reported that ₹20,000 was transferred after a person impersonated a bank representative.",
-        "priority": "High",
-        "status": "Active",
-        "created_at": created_at,
-        "evidence": [
-            {
-                "id": "ev-1",
-                "filename": "transaction_screenshot.png",
-                "date": "18 Aug 2026",
-                "insights": ["Amount: ₹20,000", "Transaction: TXN••••9281", "Date: 18 Aug 2026"]
-            }
-        ],
-        "sources": [
-            {
-                "id": "src-1",
-                "type": "Official government source",
-                "name": "India Code",
-                "provision": "Information Technology Act, 2000 - Section 66D",
-                "explanation": "Provides punishment for cheating by personation by using computer resource."
-            }
-        ],
-        "actionPlan": [
-            {
-                "step": 1,
-                "title": "Preserve transaction evidence",
-                "status": "completed"
-            },
-            {
-                "step": 2,
-                "title": "Collect communication records",
-                "status": "completed"
-            },
-            {
-                "step": 3,
-                "title": "Report the incident",
-                "status": "current",
-                "explanation": "File a complaint on the National Cyber Crime Reporting Portal.",
-                "link": "https://cybercrime.gov.in"
-            },
-            {
-                "step": 4,
-                "title": "Prepare supporting documents",
-                "status": "waiting"
-            }
-        ],
-        "timeline": [
-            {"time": "18 Aug · 14:55", "event": "Case created"},
-            {"time": "18 Aug · 15:01", "event": "Legal sources retrieved"},
-            {"time": "18 Aug · 15:04", "event": "Evidence files analyzed"},
-            {"time": "18 Aug · 15:07", "event": "Action plan generated"}
-        ]
-    }
+router = APIRouter(prefix="/cases", tags=["Cases"])
 
 
-@router.get("/", response_model=List[CaseOut])
-async def list_cases(
+@router.post("/", response_model=CaseResponse, status_code=status.HTTP_201_CREATED)
+def create_case(
+    payload: CaseCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    user: User = Depends(get_current_user),
 ):
-    """List all cases for the current user."""
-    cases = db.query(Case).filter(Case.user_id == current_user.id).all()
-    # Mock return for demo
-    return [get_demo_case_data(case.case_id, case.created_at) for case in cases]
+    """Create a new case from a natural-language issue description."""
+    case = classify_and_create_case(db, user.id, payload.initial_issue)
+    return case
 
 
-@router.post("/", response_model=CaseOut)
-async def create_case(
-    case_in: CaseCreate,
+@router.get("/", response_model=list[CaseResponse])
+def list_cases(
+    skip: int = 0,
+    limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    user: User = Depends(get_current_user),
 ):
-    """Create a new legal case."""
-    new_case = Case(
-        user_id=current_user.id,
-        issue=case_in.initial_issue,
-        domain="General Law", # Can be extracted with LLM in future
-        status="open"
-    )
-    db.add(new_case)
-    db.commit()
-    db.refresh(new_case)
-    return get_demo_case_data(new_case.case_id, new_case.created_at)
+    """List all cases belonging to the authenticated user."""
+    cases = db.query(Case).filter(Case.user_id == user.id).order_by(Case.created_at.desc()).offset(skip).limit(limit).all()
+    return cases
 
 
-@router.get("/{case_id}", response_model=CaseOut)
-async def get_case(
+@router.get("/{case_id}", response_model=CaseResponse)
+def get_case(
     case_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    user: User = Depends(get_current_user),
 ):
-    """Retrieve a specific case by ID."""
-    case = db.query(Case).filter(Case.case_id == case_id, Case.user_id == current_user.id).first()
+    """Get a single case by ID (must belong to the authenticated user)."""
+    case = db.query(Case).filter(Case.id == case_id, Case.user_id == user.id).first()
     if not case:
-        raise HTTPException(status_code=404, detail="Case not found")
-    return get_demo_case_data(case.case_id, case.created_at)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
+    return case
+
+
+@router.post("/{case_id}/chat", response_model=ChatResponse)
+def chat(
+    case_id: str,
+    payload: ChatMessage,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Send a message in the context of a case and get an AI response."""
+    case = db.query(Case).filter(Case.id == case_id, Case.user_id == user.id).first()
+    if not case:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
+
+    # Persist the user message
+    user_msg = CaseQuestion(case_id=case_id, question=payload.message, role="user")
+    db.add(user_msg)
+    db.commit()
+
+    # Generate AI response
+    response = handle_chat(db, case, payload.message)
+
+    # Persist the AI response
+    ai_msg = CaseQuestion(case_id=case_id, question=response.response, role="assistant")
+    db.add(ai_msg)
+    db.commit()
+
+    return response

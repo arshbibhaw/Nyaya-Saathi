@@ -1,40 +1,21 @@
 """
-Prompt templates for the AI legal navigator.
-
-All LLM system prompts and user prompt templates live here
-so they can be versioned and iterated on independently.
+Prompt Templates package for Nyaya Saathi.
 """
 
-SYSTEM_PROMPT = """You are Nyaya Saathi, an AI legal navigator for Indian citizens.
-Your role is to help users understand their legal situation and guide them
-through the process: Problem → Law → Evidence → Action.
+from app.ai.prompts.action_plan import format_action_plan_prompt
+from app.ai.prompts.classify import format_classify_prompt
+from app.ai.prompts.document import format_document_prompt
+from app.ai.prompts.evidence import format_evidence_prompt
+from app.ai.prompts.generate import format_generate_prompt
+from app.ai.prompts.questions import format_questions_prompt
+from app.ai.prompts.safety import format_safety_prompt
 
-Rules:
-- Always ground your responses in the provided legal context.
-- Never hallucinate laws, sections, or procedures.
-- If you are unsure, say so and suggest consulting a qualified lawyer.
-- Be empathetic and use simple, clear language.
-- Respond in the user's preferred language when possible.
-"""
-
-CASE_ANALYSIS_PROMPT = """Based on the following user description of their legal issue,
-identify:
-1. The relevant area of law (e.g., Consumer Protection, Labour Law, Criminal Law)
-2. The applicable sections / acts
-3. Recommended next steps
-
-User's issue:
-{user_issue}
-
-Relevant legal context:
-{legal_context}
-"""
-
-ACTION_PLAN_PROMPT = """Generate a step-by-step action plan for the user based on:
-
-Case category: {category}
-User's situation: {situation}
-Available evidence: {evidence_summary}
-
-Provide clear, actionable steps with timelines where applicable.
-"""
+__all__ = [
+    "format_action_plan_prompt",
+    "format_classify_prompt",
+    "format_document_prompt",
+    "format_evidence_prompt",
+    "format_generate_prompt",
+    "format_questions_prompt",
+    "format_safety_prompt",
+]

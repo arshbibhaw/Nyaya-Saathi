@@ -1,1 +1,1 @@
-"""Nyaya Saathi Backend Application."""
+# Backend application package

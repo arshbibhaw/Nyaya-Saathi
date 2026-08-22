@@ -1,17 +1,28 @@
-"""Document model — generated legal documents."""
+"""Document ORM model — stores generated legal document drafts."""
 
-from sqlalchemy import Column, ForeignKey, Integer, String, Text, DateTime
-from sqlalchemy.sql import func
+import uuid
+from datetime import datetime, timezone
 
-from app.db import Base
+from sqlalchemy import String, Text, DateTime, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.db.session import Base
 
 
 class Document(Base):
     __tablename__ = "documents"
 
-    id = Column(Integer, primary_key=True, index=True)
-    case_id = Column(String, ForeignKey("cases.case_id"), nullable=False)
-    doc_type = Column(String, nullable=False)  # complaint, notice, etc.
-    content = Column(Text, nullable=True)
-    file_path = Column(String, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+    )
+    case_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("cases.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    doc_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    generated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
+    # Relationships
+    case = relationship("Case", back_populates="documents")

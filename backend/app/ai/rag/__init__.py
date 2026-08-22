@@ -1,23 +1,21 @@
 """
-RAG (Retrieval-Augmented Generation) pipeline.
+RAG (Retrieval-Augmented Generation) package for Nyaya Saathi.
 
-Handles vector search against the legal knowledge base and
-grounded LLM responses using authoritative legal sources.
+Provides:
+  - Hierarchical legal text chunking (`chunker.py`)
+  - OpenAI / fallback vector embeddings (`embedder.py`)
+  - pgvector similarity search & metadata filtering (`retriever.py`)
 """
 
+from app.ai.rag.chunker import LegalChunk, chunk_legal_source_file, chunk_legal_source_dict
+from app.ai.rag.embedder import get_embedding, get_embeddings_batch
+from app.ai.rag.retriever import retrieve_relevant_legal_sources
 
-async def retrieve_relevant_documents(query: str, top_k: int = 5) -> list[dict]:
-    """
-    Search the pgvector-backed legal knowledge base for documents
-    relevant to the user's query.
-    """
-    # TODO: Implement pgvector similarity search
-    return []
-
-
-async def generate_grounded_response(query: str, context_docs: list[dict]) -> str:
-    """
-    Generate an LLM response grounded in the retrieved legal documents.
-    """
-    # TODO: Implement LLM call with retrieved context
-    return "Grounded response placeholder."
+__all__ = [
+    "LegalChunk",
+    "chunk_legal_source_file",
+    "chunk_legal_source_dict",
+    "get_embedding",
+    "get_embeddings_batch",
+    "retrieve_relevant_legal_sources",
+]
