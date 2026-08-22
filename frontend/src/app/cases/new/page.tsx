@@ -35,7 +35,7 @@ export default function NewCasePage() {
 
     try {
       const newCase = await createCase(formData.issue);
-      router.push(`/cases/${newCase.caseId}/chat`); // Using caseId to match new schema
+      router.push(`/cases/${newCase.id}`);
     } catch {
       // Error handled by store
     }
@@ -200,23 +200,40 @@ export default function NewCasePage() {
             {/* Step 3: Evidence */}
             {step === 3 && (
               <div className="space-y-4">
-                <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50 p-12 text-center transition-colors hover:bg-muted/80">
-                  <Upload className="size-8 text-muted-foreground mb-4" />
-                  <h3 className="text-sm font-semibold text-foreground">Click to upload or drag and drop</h3>
-                  <p className="mt-1 text-xs text-muted-foreground">PDF, JPG, PNG up to 10MB</p>
-                  <Button type="button" variant="outline" className="mt-6">
+                <div className="relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50 p-12 text-center transition-colors hover:bg-muted/80">
+                  <input
+                    type="file"
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    multiple
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        setFormData({ ...formData, evidence: [...formData.evidence, ...Array.from(e.target.files)] });
+                      }
+                    }}
+                  />
+                  <Upload className="size-8 text-muted-foreground mb-4 pointer-events-none" />
+                  <h3 className="text-sm font-semibold text-foreground pointer-events-none">Click to upload or drag and drop</h3>
+                  <p className="mt-1 text-xs text-muted-foreground pointer-events-none">PDF, JPG, PNG up to 10MB</p>
+                  <Button type="button" variant="outline" className="mt-6 pointer-events-none">
                     Select Files
                   </Button>
                 </div>
-                {/* Mock file display */}
-                <div className="flex items-center gap-3 rounded-md border p-3 bg-card">
-                  <FileText className="size-5 text-primary" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">transaction_screenshot.png</p>
-                    <p className="text-xs text-muted-foreground">1.2 MB</p>
+                
+                {formData.evidence.length > 0 && (
+                  <div className="space-y-2 mt-4">
+                    {formData.evidence.map((file, i) => (
+                      <div key={i} className="flex items-center gap-3 rounded-md border p-3 bg-card">
+                        <FileText className="size-5 text-primary" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{file.name}</p>
+                          <p className="text-xs text-muted-foreground">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                        </div>
+                        <CheckCircle2 className="size-5 text-success" />
+                      </div>
+                    ))}
                   </div>
-                  <CheckCircle2 className="size-5 text-success" />
-                </div>
+                )}
               </div>
             )}
 
