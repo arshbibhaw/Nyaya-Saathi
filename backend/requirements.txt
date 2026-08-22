@@ -11,7 +11,9 @@ pytesseract
 Pillow
 python-jose[cryptography]
 passlib[bcrypt]
+bcrypt<4.0.0
 python-dotenv
 pydantic
 pydantic-settings
 email-validator
+python-multipart
