@@ -28,11 +28,13 @@ def create_case(
 
 @router.get("/", response_model=list[CaseResponse])
 def list_cases(
+    skip: int = 0,
+    limit: int = 100,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     """List all cases belonging to the authenticated user."""
-    cases = db.query(Case).filter(Case.user_id == user.id).order_by(Case.created_at.desc()).all()
+    cases = db.query(Case).filter(Case.user_id == user.id).order_by(Case.created_at.desc()).offset(skip).limit(limit).all()
     return cases
 
 

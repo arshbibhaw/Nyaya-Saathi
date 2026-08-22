@@ -12,8 +12,6 @@ const API_BASE =
 
 // ── Generic Fetch Wrapper ───────────────────────────────────────────────────
 
-import { getSession } from "next-auth/react";
-
 class ApiError extends Error {
   constructor(
     public status: number,
@@ -26,13 +24,10 @@ class ApiError extends Error {
 
 async function getAuthHeaders(): Promise<HeadersInit> {
   if (typeof window === "undefined") {
-    // Basic fallback for server components if not using getServerSession
     return {};
   }
   
-  const session = await getSession();
-  // @ts-expect-error - Custom property
-  const token = session?.accessToken;
+  const token = localStorage.getItem("token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -44,14 +39,22 @@ async function apiClient<T>(
   
   const authHeaders = await getAuthHeaders();
 
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...authHeaders,
-      ...options.headers,
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders,
+        ...options.headers,
+      },
+    });
+  } catch (err) {
+    if (err instanceof TypeError && err.message === "Failed to fetch") {
+      throw new Error("Unable to connect to the server. Is the backend running on port 8000?");
+    }
+    throw err;
+  }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
