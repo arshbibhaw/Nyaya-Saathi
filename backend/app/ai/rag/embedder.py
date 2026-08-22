@@ -13,10 +13,9 @@ import logging
 import math
 from typing import List, Optional
 
-from app.core.config import get_settings
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
-settings = get_settings()
 
 
 def _generate_fallback_embedding(text: str, dimensions: int = 1536) -> List[float]:
@@ -49,7 +48,7 @@ def get_embedding(text: str) -> List[float]:
 
     Returns a 1536-dimensional float vector.
     """
-    api_key = settings.OPENAI_API_KEY.strip()
+    api_key = settings.EMBEDDING_API_KEY.strip()
     if api_key and not api_key.startswith("sk-..."):
         try:
             from openai import OpenAI
@@ -68,7 +67,7 @@ def get_embedding(text: str) -> List[float]:
 
 def get_embeddings_batch(texts: List[str]) -> List[List[float]]:
     """Generate embedding vectors for a batch of texts."""
-    api_key = settings.OPENAI_API_KEY.strip()
+    api_key = settings.EMBEDDING_API_KEY.strip()
     if api_key and not api_key.startswith("sk-..."):
         try:
             from openai import OpenAI
