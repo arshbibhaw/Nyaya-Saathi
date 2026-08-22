@@ -9,6 +9,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  isHydrated: boolean;
 
   login: (email: string, password: string) => Promise<void>;
   register: (
@@ -18,6 +19,7 @@ interface AuthState {
   ) => Promise<void>;
   logout: () => void;
   clearError: () => void;
+  setHasHydrated: (state: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -28,6 +30,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      isHydrated: false,
 
       login: async (email, password) => {
         set({ isLoading: true, error: null });
@@ -81,6 +84,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       clearError: () => set({ error: null }),
+      setHasHydrated: (state) => set({ isHydrated: state }),
     }),
     {
       name: "nyaya-auth",
@@ -89,6 +93,9 @@ export const useAuthStore = create<AuthState>()(
         token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     },
   ),
 );

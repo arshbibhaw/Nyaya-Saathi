@@ -12,6 +12,8 @@ const API_BASE =
 
 // ── Generic Fetch Wrapper ───────────────────────────────────────────────────
 
+import { getSession } from "next-auth/react";
+
 class ApiError extends Error {
   constructor(
     public status: number,
@@ -22,9 +24,15 @@ class ApiError extends Error {
   }
 }
 
-function getAuthHeaders(): HeadersInit {
-  if (typeof window === "undefined") return {};
-  const token = localStorage.getItem("token");
+async function getAuthHeaders(): Promise<HeadersInit> {
+  if (typeof window === "undefined") {
+    // Basic fallback for server components if not using getServerSession
+    return {};
+  }
+  
+  const session = await getSession();
+  // @ts-expect-error - Custom property
+  const token = session?.accessToken;
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -33,12 +41,14 @@ async function apiClient<T>(
   options: RequestInit = {},
 ): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
+  
+  const authHeaders = await getAuthHeaders();
 
   const res = await fetch(url, {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      ...getAuthHeaders(),
+      ...authHeaders,
       ...options.headers,
     },
   });
@@ -115,10 +125,12 @@ export async function uploadEvidence(
   const formData = new FormData();
   formData.append("file", file);
 
+  const authHeaders = await getAuthHeaders();
+
   const url = `${API_BASE}/cases/${caseId}/evidence`;
   const res = await fetch(url, {
     method: "POST",
-    headers: getAuthHeaders(),
+    headers: authHeaders,
     body: formData, // No Content-Type header — browser sets multipart boundary
   });
 

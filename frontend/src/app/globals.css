@@ -9,7 +9,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -39,6 +38,8 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -47,78 +48,86 @@
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #020817;
-  --card: #ffffff;
-  --card-foreground: #020817;
-  --popover: #ffffff;
-  --popover-foreground: #020817;
-  --primary: #0f172a;
-  --primary-foreground: #f8fafc;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #f1f5f9;
-  --accent-foreground: #0f172a;
-  --destructive: #ef4444;
-  --destructive-foreground: #f8fafc;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #020817;
+  /* Nyaya Saathi - Warm Beige/Ivory Light Theme */
+  --background: #F7F3EA;
+  --foreground: #292824;
+  --card: #FFFDF8;
+  --card-foreground: #292824;
+  --popover: #FFFDF8;
+  --popover-foreground: #292824;
+  --primary: #344E5C;
+  --primary-foreground: #FFFDF8;
+  --secondary: #F1ECE2;
+  --secondary-foreground: #344E5C;
+  --muted: #F1ECE2;
+  --muted-foreground: #8A867D;
+  --accent: #F1ECE2;
+  --accent-foreground: #292824;
+  --destructive: #A24B45;
+  --destructive-foreground: #FFFDF8;
+  --border: #DED8CC;
+  --input: #DED8CC;
+  --ring: #344E5C;
   --radius: 0.75rem;
 
-  --chart-1: #0f172a;
-  --chart-2: #334155;
-  --chart-3: #475569;
-  --chart-4: #64748b;
-  --chart-5: #94a3b8;
+  --success: #557A61;
+  --warning: #A4773C;
 
-  --sidebar-background: #fafafa;
-  --sidebar-foreground: #0f172a;
-  --sidebar-primary: #0f172a;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f1f5f9;
-  --sidebar-accent-foreground: #0f172a;
-  --sidebar-border: #e2e8f0;
-  --sidebar-ring: #020817;
+  --chart-1: #344E5C;
+  --chart-2: #557A61;
+  --chart-3: #A4773C;
+  --chart-4: #A24B45;
+  --chart-5: #DED8CC;
+
+  --sidebar-background: #FFFDF8;
+  --sidebar-foreground: #292824;
+  --sidebar-primary: #344E5C;
+  --sidebar-primary-foreground: #FFFDF8;
+  --sidebar-accent: #F1ECE2;
+  --sidebar-accent-foreground: #292824;
+  --sidebar-border: #DED8CC;
+  --sidebar-ring: #344E5C;
 }
 
 .dark {
-  --background: #020817;
-  --foreground: #f8fafc;
-  --card: #020817;
-  --card-foreground: #f8fafc;
-  --popover: #020817;
-  --popover-foreground: #f8fafc;
-  --primary: #f8fafc;
-  --primary-foreground: #0f172a;
-  --secondary: #1e293b;
-  --secondary-foreground: #f8fafc;
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
-  --accent: #1e293b;
-  --accent-foreground: #f8fafc;
-  --destructive: #7f1d1d;
-  --destructive-foreground: #f8fafc;
-  --border: #1e293b;
-  --input: #1e293b;
-  --ring: #cbd5e1;
+  /* Nyaya Saathi - Obsidian Dark Theme */
+  --background: #0F172A;
+  --foreground: #F8FAFC;
+  --card: #1E293B;
+  --card-foreground: #F8FAFC;
+  --popover: #1E293B;
+  --popover-foreground: #F8FAFC;
+  --primary: #4F46E5;
+  --primary-foreground: #FFFFFF;
+  --secondary: #0D9488;
+  --secondary-foreground: #FFFFFF;
+  --muted: #334155;
+  --muted-foreground: #94A3B8;
+  --accent: #334155;
+  --accent-foreground: #F8FAFC;
+  --destructive: #EF4444;
+  --destructive-foreground: #F8FAFC;
+  --border: #334155;
+  --input: #334155;
+  --ring: #4F46E5;
 
-  --chart-1: #f8fafc;
-  --chart-2: #cbd5e1;
-  --chart-3: #94a3b8;
-  --chart-4: #64748b;
-  --chart-5: #475569;
+  --success: #10B981;
+  --warning: #F59E0B;
 
-  --sidebar-background: #020817;
-  --sidebar-foreground: #f8fafc;
-  --sidebar-primary: #f8fafc;
-  --sidebar-primary-foreground: #0f172a;
-  --sidebar-accent: #1e293b;
-  --sidebar-accent-foreground: #f8fafc;
-  --sidebar-border: #1e293b;
-  --sidebar-ring: #cbd5e1;
+  --chart-1: #4F46E5;
+  --chart-2: #0D9488;
+  --chart-3: #F59E0B;
+  --chart-4: #EF4444;
+  --chart-5: #334155;
+
+  --sidebar-background: #0F172A;
+  --sidebar-foreground: #F8FAFC;
+  --sidebar-primary: #4F46E5;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #1E293B;
+  --sidebar-accent-foreground: #F8FAFC;
+  --sidebar-border: #1E293B;
+  --sidebar-ring: #4F46E5;
 }
 
 @layer base {
@@ -126,7 +135,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-300;
   }
   html {
     @apply font-sans;

@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import { format } from "date-fns";
 import { ArrowLeft, MessageSquare, ClipboardList, FileText, CheckCircle2, AlertCircle, Clock, BookOpen, ExternalLink, Paperclip, Send } from "lucide-react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -279,16 +280,22 @@ export default function CaseWorkspace({ params }: { params: Promise<{ caseId: st
 
           {/* Chat Tab */}
           {activeTab === "chat" && (
-            <div className="flex flex-col h-[600px] rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50">
+            <div className="flex flex-col h-[600px] rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/30">
                 {messages.map((msg, i) => (
-                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <motion.div 
+                    key={i} 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
                     <div className={`max-w-[80%] rounded-2xl px-5 py-3 text-sm ${
-                      msg.role === 'user' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none shadow-sm'
+                      msg.role === 'user' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-card border border-border text-foreground rounded-bl-none shadow-sm'
                     }`}>
                       {msg.text}
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
                 {sending && (
                   <div className="flex justify-start">

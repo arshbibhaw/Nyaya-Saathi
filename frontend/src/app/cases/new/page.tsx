@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, ArrowLeft, Loader2, Upload, FileText, CheckCircle2, Circle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -64,7 +65,7 @@ export default function NewCasePage() {
               const isCompleted = step > s.id;
               const isCurrent = step === s.id;
               return (
-                <li key={s.id} className={cn("flex items-center", isCurrent ? "text-slate-900" : isCompleted ? "text-emerald-600" : "text-slate-400")}>
+                <li key={s.id} className={cn("flex items-center", isCurrent ? "text-slate-900 dark:text-slate-100" : isCompleted ? "text-emerald-600 dark:text-emerald-500" : "text-slate-400 dark:text-slate-500")}>
                   <span className="mr-2 flex items-center">
                     <span className="mr-2 text-xs font-mono">{String(s.id).padStart(2, '0')}</span>
                     {s.name}
@@ -87,13 +88,13 @@ export default function NewCasePage() {
       </div>
 
       <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
           {step === 1 && "Tell us what happened"}
           {step === 2 && "Understand the context"}
           {step === 3 && "Do you have any evidence?"}
           {step === 4 && "Review your case"}
         </h1>
-        <p className="mt-2 text-slate-500">
+        <p className="mt-2 text-slate-500 dark:text-slate-400">
           {step === 1 && "Describe the situation in your own words. You don't need to know legal terminology."}
           {step === 2 && "Collect only the necessary information needed for analysis."}
           {step === 3 && "Upload screenshots, receipts, agreements, or messages."}
@@ -108,142 +109,152 @@ export default function NewCasePage() {
           </div>
         )}
 
-        {/* Step 1: Problem */}
-        {step === 1 && (
-          <div className="space-y-3">
-            <Label htmlFor="issue" className="sr-only">Your Issue</Label>
-            <Textarea
-              id="issue"
-              value={formData.issue}
-              onChange={(e) => setFormData({ ...formData, issue: e.target.value })}
-              placeholder="Example: I received a call from someone impersonating a bank representative and transferred ₹20,000..."
-              className="min-h-[250px] resize-none text-base p-4"
-              required
-            />
-            <div className="flex justify-between text-xs text-slate-500">
-              <span>You can write in English or Hindi.</span>
-              <span>{formData.issue.length} characters</span>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Context */}
-        {step === 2 && (
-          <div className="space-y-6">
-            <div className="grid gap-6 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="date">When did this happen?</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={step}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Step 1: Problem */}
+            {step === 1 && (
+              <div className="space-y-3">
+                <Label htmlFor="issue" className="sr-only">Your Issue</Label>
+                <Textarea
+                  id="issue"
+                  value={formData.issue}
+                  onChange={(e) => setFormData({ ...formData, issue: e.target.value })}
+                  placeholder="Example: I received a call from someone impersonating a bank representative and transferred ₹20,000..."
+                  className="min-h-[250px] resize-none text-base p-4"
+                  required
                 />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>You can write in English or Hindi.</span>
+                  <span>{formData.issue.length} characters</span>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="amount">Approximately how much money was involved?</Label>
-                <Input
-                  id="amount"
-                  placeholder="₹ amount"
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="state">Which state are you in?</Label>
-              <select
-                id="state"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                value={formData.state}
-                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-              >
-                <option value="">Select a state</option>
-                <option value="maharashtra">Maharashtra</option>
-                <option value="karnataka">Karnataka</option>
-                <option value="delhi">Delhi</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
+            )}
 
-            <div className="space-y-3">
-              <Label>Have you already reported this?</Label>
-              <div className="flex gap-4">
-                {["Yes", "No", "Not sure"].map((opt) => (
-                  <label key={opt} className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="reported"
-                      value={opt}
-                      checked={formData.reported === opt}
-                      onChange={(e) => setFormData({ ...formData, reported: e.target.value })}
-                      className="size-4 text-primary"
+            {/* Step 2: Context */}
+            {step === 2 && (
+              <div className="space-y-6">
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="date">When did this happen?</Label>
+                    <Input
+                      id="date"
+                      type="date"
+                      value={formData.date}
+                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                     />
-                    <span className="text-sm font-medium">{opt}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3: Evidence */}
-        {step === 3 && (
-          <div className="space-y-4">
-            <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-12 text-center">
-              <Upload className="size-8 text-slate-400 mb-4" />
-              <h3 className="text-sm font-semibold text-slate-900">Click to upload or drag and drop</h3>
-              <p className="mt-1 text-xs text-slate-500">PDF, JPG, PNG up to 10MB</p>
-              <Button type="button" variant="outline" className="mt-6 bg-white">
-                Select Files
-              </Button>
-            </div>
-            {/* Mock file display */}
-            <div className="flex items-center gap-3 rounded-md border p-3">
-              <FileText className="size-5 text-blue-500" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">transaction_screenshot.png</p>
-                <p className="text-xs text-slate-500">1.2 MB</p>
-              </div>
-              <CheckCircle2 className="size-5 text-emerald-500" />
-            </div>
-          </div>
-        )}
-
-        {/* Step 4: Review */}
-        {step === 4 && (
-          <div className="space-y-6">
-            <Card className="border-slate-200 shadow-sm">
-              <CardContent className="p-6">
-                <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500">Here's what we understood</h3>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="amount">Approximately how much money was involved?</Label>
+                    <Input
+                      id="amount"
+                      placeholder="₹ amount"
+                      value={formData.amount}
+                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    />
+                  </div>
+                </div>
                 
-                <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <dt className="text-sm font-medium text-slate-500">Issue</dt>
-                    <dd className="mt-1 text-sm text-slate-900 line-clamp-2">{formData.issue || "Cyber / Financial Fraud"}</dd>
+                <div className="space-y-2">
+                  <Label htmlFor="state">Which state are you in?</Label>
+                  <select
+                    id="state"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    value={formData.state}
+                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                  >
+                    <option value="">Select a state</option>
+                    <option value="maharashtra">Maharashtra</option>
+                    <option value="karnataka">Karnataka</option>
+                    <option value="delhi">Delhi</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Have you already reported this?</Label>
+                  <div className="flex gap-4">
+                    {["Yes", "No", "Not sure"].map((opt) => (
+                      <label key={opt} className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="reported"
+                          value={opt}
+                          checked={formData.reported === opt}
+                          onChange={(e) => setFormData({ ...formData, reported: e.target.value })}
+                          className="size-4 text-primary"
+                        />
+                        <span className="text-sm font-medium">{opt}</span>
+                      </label>
+                    ))}
                   </div>
-                  <div>
-                    <dt className="text-sm font-medium text-slate-500">Location</dt>
-                    <dd className="mt-1 text-sm text-slate-900 capitalize">{formData.state || "Maharashtra"}</dd>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Evidence */}
+            {step === 3 && (
+              <div className="space-y-4">
+                <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50 p-12 text-center transition-colors hover:bg-muted/80">
+                  <Upload className="size-8 text-muted-foreground mb-4" />
+                  <h3 className="text-sm font-semibold text-foreground">Click to upload or drag and drop</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">PDF, JPG, PNG up to 10MB</p>
+                  <Button type="button" variant="outline" className="mt-6">
+                    Select Files
+                  </Button>
+                </div>
+                {/* Mock file display */}
+                <div className="flex items-center gap-3 rounded-md border p-3 bg-card">
+                  <FileText className="size-5 text-primary" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">transaction_screenshot.png</p>
+                    <p className="text-xs text-muted-foreground">1.2 MB</p>
                   </div>
-                  <div>
-                    <dt className="text-sm font-medium text-slate-500">Evidence</dt>
-                    <dd className="mt-1 text-sm text-slate-900">1 file</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-slate-500">Urgency</dt>
-                    <dd className="mt-1 text-sm font-medium text-amber-600">High</dd>
-                  </div>
-                </dl>
-              </CardContent>
-            </Card>
-            
-            <p className="text-xs text-slate-500 text-center">
-              Your documents are used to help analyze this case. Review the privacy policy before uploading sensitive information.
-            </p>
-          </div>
-        )}
+                  <CheckCircle2 className="size-5 text-success" />
+                </div>
+              </div>
+            )}
+
+            {/* Step 4: Review */}
+            {step === 4 && (
+              <div className="space-y-6">
+                <Card className="shadow-sm">
+                  <CardContent className="p-6">
+                    <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Here's what we understood</h3>
+                    
+                    <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div>
+                        <dt className="text-sm font-medium text-muted-foreground">Issue</dt>
+                        <dd className="mt-1 text-sm text-foreground line-clamp-2">{formData.issue || "Cyber / Financial Fraud"}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-muted-foreground">Location</dt>
+                        <dd className="mt-1 text-sm text-foreground capitalize">{formData.state || "Maharashtra"}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-muted-foreground">Evidence</dt>
+                        <dd className="mt-1 text-sm text-foreground">1 file</dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-muted-foreground">Urgency</dt>
+                        <dd className="mt-1 text-sm font-medium text-warning">High</dd>
+                      </div>
+                    </dl>
+                  </CardContent>
+                </Card>
+                
+                <p className="text-xs text-muted-foreground text-center">
+                  Your documents are used to help analyze this case. Review the privacy policy before uploading sensitive information.
+                </p>
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
 
         <div className="flex justify-between border-t border-slate-100 pt-6">
           <Button

@@ -70,7 +70,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
             {getGreeting()}, {user?.full_name?.split(" ")[0] || "User"}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -89,8 +89,8 @@ export default function DashboardPage() {
         {/* Cases List */}
         <div className="md:col-span-2 space-y-6">
           <div className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
-            <div className="border-b border-slate-200 bg-slate-50/50 px-6 py-4">
-              <h2 className="text-base font-semibold text-slate-900">Active Matters</h2>
+            <div className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-6 py-4">
+              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Active Matters</h2>
             </div>
             
             <div className="divide-y divide-slate-100">
@@ -110,7 +110,7 @@ export default function DashboardPage() {
                         </div>
                         <div>
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-slate-900 text-sm">
+                            <span className="font-semibold text-slate-900 dark:text-slate-100 text-sm">
                               {/* Using hackathon mock category if present or fallback */}
                               {"Cyber Financial Fraud" || c.domain}
                             </span>
@@ -132,8 +132,8 @@ export default function DashboardPage() {
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center p-12 text-center">
-                  <FolderOpen className="size-8 text-slate-300 mb-3" />
-                  <h3 className="text-sm font-medium text-slate-900">No active matters</h3>
+                  <FolderOpen className="size-8 text-slate-300 dark:text-slate-600 mb-3" />
+                  <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">No active matters</h3>
                   <p className="mt-1 text-sm text-slate-500">Get started by creating a new case.</p>
                 </div>
               )}
@@ -144,9 +144,9 @@ export default function DashboardPage() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Recent Activity */}
-          <Card className="border-slate-200 shadow-sm">
-            <CardHeader className="border-b border-slate-100 pb-3">
-              <CardTitle className="text-sm font-semibold text-slate-900">Recent Activity</CardTitle>
+          <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+            <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
+              <CardTitle className="text-sm font-semibold text-slate-900 dark:text-slate-100">Recent Activity</CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
               <div className="space-y-4">
@@ -159,7 +159,7 @@ export default function DashboardPage() {
                       )}
                     </div>
                     <div className="pb-2">
-                      <p className="text-sm font-medium text-slate-900">{act.action}</p>
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{act.action}</p>
                       <p className="text-xs text-slate-500">{act.case}</p>
                       <p className="mt-1 text-xs font-medium text-slate-400">{act.time}</p>
                     </div>
@@ -170,21 +170,21 @@ export default function DashboardPage() {
           </Card>
 
           {/* Quick Links */}
-          <Card className="border-slate-200 shadow-sm">
-            <CardHeader className="border-b border-slate-100 pb-3">
-              <CardTitle className="text-sm font-semibold text-slate-900">Quick Links</CardTitle>
+          <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+            <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
+              <CardTitle className="text-sm font-semibold text-slate-900 dark:text-slate-100">Quick Links</CardTitle>
             </CardHeader>
             <CardContent className="pt-2 px-2">
               <nav className="flex flex-col gap-1">
-                <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800">
                   <Upload className="mr-3 size-4 text-slate-400" /> Upload Evidence
                 </Button>
                 <Link href="/dashboard/plans">
-                  <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                  <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800">
                     <FileText className="mr-3 size-4 text-slate-400" /> View Action Plans
                   </Button>
                 </Link>
-                <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800">
                   <AlertCircle className="mr-3 size-4 text-slate-400" /> Legal Resources
                 </Button>
               </nav>

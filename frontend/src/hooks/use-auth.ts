@@ -15,19 +15,21 @@ import { useAuthStore } from "@/store/auth-store";
  */
 export function useAuth(requireAuth = true) {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading, error, login, register, logout, clearError } =
+  const { user, isAuthenticated, isLoading, error, isHydrated, login, register, logout, clearError } =
     useAuthStore();
 
   useEffect(() => {
-    if (requireAuth && !isAuthenticated && !isLoading) {
+    // Only redirect if hydration is complete, auth is required, and not authenticated
+    if (isHydrated && requireAuth && !isAuthenticated && !isLoading) {
       router.replace("/auth/login");
     }
-  }, [requireAuth, isAuthenticated, isLoading, router]);
+  }, [requireAuth, isAuthenticated, isLoading, isHydrated, router]);
 
   return {
     user,
     isAuthenticated,
     isLoading,
+    isHydrated,
     error,
     login,
     register,

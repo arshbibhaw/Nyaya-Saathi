@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
 import { useAuthStore } from "@/store/auth-store";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -92,9 +93,9 @@ export function Sidebar() {
                 onClick={() => setMobileOpen(false)}
                 className={cn(
                   "group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                  pathname === "/dashboard"
-                    ? "bg-slate-100 text-slate-900"
-                    : "text-muted-foreground hover:bg-slate-50 hover:text-foreground",
+                    pathname === "/dashboard"
+                      ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+                      : "text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-foreground",
                 )}
               >
                 <LayoutDashboard
@@ -126,8 +127,8 @@ export function Sidebar() {
                     className={cn(
                       "group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-slate-100 text-slate-900"
-                        : "text-muted-foreground hover:bg-slate-50 hover:text-foreground",
+                        ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+                        : "text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-foreground",
                     )}
                   >
                     <item.icon
@@ -186,20 +187,20 @@ export function Sidebar() {
         <div className="p-4 space-y-1">
           <Link
             href="/help"
-            className="group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-slate-50 hover:text-foreground transition-colors"
+            className="group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-foreground transition-colors"
           >
             <HelpCircle className="size-4 text-muted-foreground group-hover:text-foreground" />
             Help
           </Link>
           <Link
             href="/profile"
-            className="group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-slate-50 hover:text-foreground transition-colors"
+            className="group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-foreground transition-colors"
           >
             <User className="size-4 text-muted-foreground group-hover:text-foreground" />
             Profile
           </Link>
 
-          <div className="mt-4 flex items-center gap-3 px-3 py-2">
+          <div className="mt-4 flex items-center gap-2 px-3 py-2">
             <Avatar className="size-8 border border-border">
               <AvatarFallback className="bg-slate-100 text-xs font-medium text-slate-900">
                 {initials}
@@ -210,6 +211,7 @@ export function Sidebar() {
                 {user?.full_name ?? "User"}
               </p>
             </div>
+            <ThemeToggle />
             <Button
               variant="ghost"
               size="icon"
