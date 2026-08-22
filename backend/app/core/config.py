@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # --- Database ---
-    DATABASE_URL: str = "sqlite:///./nyayasaathi.db"
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./nyayasaathi.db")
 
 
     # --- Security ---
