@@ -107,12 +107,7 @@ export default function LandingPage() {
         animate="show"
         variants={container}
       >
-        <motion.div variants={fadeUp} className="mb-6">
-          <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-xs font-medium text-primary">
-            <Sparkles className="size-3.5" />
-            AI-Powered Legal Navigation for India
-          </span>
-        </motion.div>
+
 
         <motion.h1
           variants={fadeUp}
