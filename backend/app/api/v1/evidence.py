@@ -68,9 +68,33 @@ async def upload_evidence(
     # Run OCR / text extraction
     extracted_text = extract_text(file_path, file.content_type)
 
-    # TODO: Replace with AI-based entity extraction when the AI teammate
-    #       implements the extractor prompt.
+    # Use LLM to extract entities
+    from app.ai.llm.client import LLMClient
+    from app.ai.prompts.evidence import format_evidence_prompt
+    
     extracted_entities = ExtractedEntities()
+    
+    if extracted_text and extracted_text.strip():
+        messages = format_evidence_prompt(
+            document_text=extracted_text,
+            filename=file.filename,
+            mime_type=file.content_type,
+            category=case.domain or "unknown",
+            subcategory=case.issue or "unknown",
+        )
+        
+        try:
+            client = LLMClient()
+            result = await client.complete_structured(
+                messages=messages,
+                response_model=ExtractedEntities,
+                step="evidence",
+                case_id=case_id,
+            )
+            extracted_entities = result["parsed"]
+        except Exception as e:
+            # Fallback if extraction fails
+            print(f"Entity extraction failed: {e}")
 
     # Persist
     evidence = Evidence(
