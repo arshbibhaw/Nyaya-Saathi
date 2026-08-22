@@ -6,6 +6,8 @@ psycopg2-binary
 pgvector
 langchain
 openai
+anthropic
+google-generativeai
 PyMuPDF
 pytesseract
 python-jose[cryptography]
