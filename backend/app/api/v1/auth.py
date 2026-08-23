@@ -1,11 +1,11 @@
 """
-Authentication routes: register and login.
+Authentication routes: register, login, me, logout.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_db
+from app.api.dependencies import get_db, get_current_user
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models.user import User
 from app.schemas.user import UserCreate, UserLogin, TokenResponse, UserResponse
@@ -26,6 +26,7 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
     user = User(
         email=payload.email,
         password_hash=hash_password(payload.password),
+        full_name=payload.full_name,
     )
     db.add(user)
     db.commit()
@@ -42,7 +43,7 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
 def login(payload: UserLogin, db: Session = Depends(get_db)):
     """Authenticate a user and return a JWT."""
     user = db.query(User).filter(User.email == payload.email).first()
-    
+
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -54,3 +55,15 @@ def login(payload: UserLogin, db: Session = Depends(get_db)):
         access_token=token,
         user=UserResponse.model_validate(user),
     )
+
+
+@router.get("/me", response_model=UserResponse)
+def get_me(user: User = Depends(get_current_user)):
+    """Return the currently authenticated user."""
+    return UserResponse.model_validate(user)
+
+
+@router.post("/logout", status_code=status.HTTP_200_OK)
+def logout():
+    """Logout endpoint (no-op for stateless JWT, provided for API completeness)."""
+    return {"detail": "Logged out successfully"}
