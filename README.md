@@ -107,11 +107,3 @@ uvicorn main:app --reload
 *(Alternatively, use `docker-compose up` once the infrastructure is configured).*
 
 ---
-
-## 🌿 Git Strategy
-* **NEVER** push directly to `main`.
-* Create branches in the format: `feature/your-feature-name` or `feat/ui-ux-redesign`.
-* Open a Pull Request for review before merging.
-* Ensure no secrets (API keys, passwords) are committed. Our `.gitignore` handles `.env` files automatically.
-
-> **Let's build something impactful and win this hackathon!** 🏆
