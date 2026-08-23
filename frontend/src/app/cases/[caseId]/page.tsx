@@ -18,7 +18,7 @@ type Tab = "overview" | "action-plan" | "evidence" | "chat";
 export default function CaseWorkspace({ params }: { params: Promise<{ caseId: string }> }) {
   const { caseId } = use(params);
   const [activeTab, setActiveTab] = useState<Tab>("action-plan");
-  const [caseData, setCaseData] = useState<Record<string, unknown> | null>(null);
+  const [caseData, setCaseData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   // Chat state
@@ -137,7 +137,7 @@ export default function CaseWorkspace({ params }: { params: Promise<{ caseId: st
             <div className="grid gap-6 md:grid-cols-3">
               <div className="md:col-span-2 space-y-4">
                 <h2 className="text-lg font-semibold text-slate-900 mb-4">Recommended Actions</h2>
-                {Array.isArray(caseData.actionPlan) && caseData.actionPlan.map((step: Record<string, unknown>, idx: number) => (
+                {Array.isArray(caseData.actionPlan) && caseData.actionPlan.map((step: any, idx: number) => (
                   <Card key={idx} className={`border-l-4 shadow-sm ${
                     step.status === 'completed' ? 'border-l-emerald-500 bg-slate-50/50' : 
                     step.status === 'current' ? 'border-l-blue-600 bg-white' : 
@@ -197,7 +197,7 @@ export default function CaseWorkspace({ params }: { params: Promise<{ caseId: st
                 <Button variant="outline" size="sm"><Paperclip className="mr-2 size-4" /> Upload New</Button>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                {Array.isArray(caseData.evidence) && caseData.evidence.map((ev: Record<string, unknown>) => (
+                {Array.isArray(caseData.evidence) && caseData.evidence.map((ev: any) => (
                   <Card key={String(ev.id)} className="shadow-sm">
                     <CardContent className="p-5">
                       <div className="flex items-start justify-between">
@@ -238,7 +238,7 @@ export default function CaseWorkspace({ params }: { params: Promise<{ caseId: st
                     <CardTitle className="text-base font-semibold">Legal Sources & Precedents</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {Array.isArray(caseData.sources) && caseData.sources.map((src: Record<string, unknown>) => (
+                    {Array.isArray(caseData.sources) && caseData.sources.map((src: any) => (
                       <div key={String(src.id)} className="rounded-md border border-slate-200 p-4 bg-slate-50">
                         <div className="flex items-center gap-2 mb-2">
                           <BookOpen className="size-4 text-slate-500" />
@@ -257,7 +257,7 @@ export default function CaseWorkspace({ params }: { params: Promise<{ caseId: st
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {Array.isArray(caseData.timeline) && caseData.timeline.map((event: Record<string, unknown>, i: number) => (
+                      {Array.isArray(caseData.timeline) && caseData.timeline.map((event: any, i: number) => (
                         <div key={i} className="flex gap-3">
                           <div className="relative mt-1 flex flex-col items-center">
                             <div className="size-2 rounded-full bg-slate-300" />
