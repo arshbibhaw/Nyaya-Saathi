@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { ChatMessage } from "@/lib/types";
-import { sendChatMessage } from "@/lib/api";
+import { sendChatMessageStream } from "@/lib/api";
 
 interface ChatState {
   messages: ChatMessage[];
@@ -26,32 +26,48 @@ export const useChatStore = create<ChatState>()((set) => ({
       timestamp: new Date().toISOString(),
     };
 
+    const aiMsgId = `ai-${Date.now()}`;
+    const aiMsg: ChatMessage = {
+      id: aiMsgId,
+      role: "assistant",
+      content: "",
+      timestamp: new Date().toISOString(),
+    };
+
     set((state) => ({
-      messages: [...state.messages, userMsg],
+      messages: [...state.messages, userMsg, aiMsg],
       isTyping: true,
       error: null,
     }));
 
     try {
-      const res = await sendChatMessage(caseId, content);
-
-      const aiMsg: ChatMessage = {
-        id: `ai-${Date.now()}`,
-        role: "assistant",
-        content: res.reply,
-        citations: res.citations,
-        timestamp: new Date().toISOString(),
-      };
-
-      set((state) => ({
-        messages: [...state.messages, aiMsg],
-        isTyping: false,
-      }));
+      await sendChatMessageStream(
+        caseId,
+        content,
+        (chunk) => {
+          set((state) => ({
+            messages: state.messages.map((m) =>
+              m.id === aiMsgId ? { ...m, content: m.content + chunk } : m
+            ),
+          }));
+        },
+        (sources) => {
+          set((state) => ({
+            messages: state.messages.map((m) =>
+              m.id === aiMsgId ? { ...m, citations: sources } : m
+            ),
+          }));
+        }
+      );
+      
+      set({ isTyping: false });
     } catch (err) {
-      set({
+      set((state) => ({
         isTyping: false,
         error: err instanceof Error ? err.message : "Failed to send message",
-      });
+        // Remove empty AI message if request failed completely
+        messages: state.messages.filter((m) => m.id !== aiMsgId || m.content !== ""),
+      }));
     }
   },
 

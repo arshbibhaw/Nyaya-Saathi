@@ -285,7 +285,7 @@ export default function LandingPage() {
           </motion.div>
 
           <div className="grid gap-6 md:grid-cols-2">
-            {features.map((feature, i) => (
+            {features.map((feature) => (
               <motion.div
                 layoutId={`feature-card-${feature.title}`}
                 onClick={() => setSelectedFeature(feature)}

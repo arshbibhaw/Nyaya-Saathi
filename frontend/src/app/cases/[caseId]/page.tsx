@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from "react";
 import { format } from "date-fns";
-import { ArrowLeft, MessageSquare, ClipboardList, FileText, CheckCircle2, AlertCircle, Clock, BookOpen, ExternalLink, Paperclip, Send } from "lucide-react";
+import { ArrowLeft, MessageSquare, ClipboardList, FileText, CheckCircle2, AlertCircle, BookOpen, ExternalLink, Paperclip, Send } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -18,7 +18,7 @@ type Tab = "overview" | "action-plan" | "evidence" | "chat";
 export default function CaseWorkspace({ params }: { params: Promise<{ caseId: string }> }) {
   const { caseId } = use(params);
   const [activeTab, setActiveTab] = useState<Tab>("action-plan");
-  const [caseData, setCaseData] = useState<any>(null);
+  const [caseData, setCaseData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Chat state
@@ -88,18 +88,18 @@ export default function CaseWorkspace({ params }: { params: Promise<{ caseId: st
             <div>
               <div className="flex items-center gap-3 mb-1">
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                  {caseData.category}
+                  {String(caseData.category)}
                 </h1>
-                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">{caseData.priority} Priority</Badge>
+                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">{String(caseData.priority)} Priority</Badge>
               </div>
               <p className="text-sm text-slate-500 max-w-2xl">
-                {caseData.summary}
+                {String(caseData.summary)}
               </p>
             </div>
             <div className="flex items-center gap-2 text-sm text-slate-500">
               <span className="font-medium">ID: {caseId.split('-')[0].toUpperCase()}</span>
               <span>•</span>
-              <span>{format(new Date(caseData.created_at), 'MMM d, yyyy')}</span>
+              <span>{format(new Date(String(caseData.created_at)), 'MMM d, yyyy')}</span>
             </div>
           </div>
 
@@ -137,7 +137,7 @@ export default function CaseWorkspace({ params }: { params: Promise<{ caseId: st
             <div className="grid gap-6 md:grid-cols-3">
               <div className="md:col-span-2 space-y-4">
                 <h2 className="text-lg font-semibold text-slate-900 mb-4">Recommended Actions</h2>
-                {caseData.actionPlan?.map((step: any, idx: number) => (
+                {Array.isArray(caseData.actionPlan) && caseData.actionPlan.map((step: Record<string, unknown>, idx: number) => (
                   <Card key={idx} className={`border-l-4 shadow-sm ${
                     step.status === 'completed' ? 'border-l-emerald-500 bg-slate-50/50' : 
                     step.status === 'current' ? 'border-l-blue-600 bg-white' : 
@@ -197,8 +197,8 @@ export default function CaseWorkspace({ params }: { params: Promise<{ caseId: st
                 <Button variant="outline" size="sm"><Paperclip className="mr-2 size-4" /> Upload New</Button>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                {caseData.evidence?.map((ev: any) => (
-                  <Card key={ev.id} className="shadow-sm">
+                {Array.isArray(caseData.evidence) && caseData.evidence.map((ev: Record<string, unknown>) => (
+                  <Card key={String(ev.id)} className="shadow-sm">
                     <CardContent className="p-5">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
@@ -238,8 +238,8 @@ export default function CaseWorkspace({ params }: { params: Promise<{ caseId: st
                     <CardTitle className="text-base font-semibold">Legal Sources & Precedents</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {caseData.sources?.map((src: any) => (
-                      <div key={src.id} className="rounded-md border border-slate-200 p-4 bg-slate-50">
+                    {Array.isArray(caseData.sources) && caseData.sources.map((src: Record<string, unknown>) => (
+                      <div key={String(src.id)} className="rounded-md border border-slate-200 p-4 bg-slate-50">
                         <div className="flex items-center gap-2 mb-2">
                           <BookOpen className="size-4 text-slate-500" />
                           <span className="font-semibold text-sm text-slate-900">{src.provision}</span>
@@ -257,7 +257,7 @@ export default function CaseWorkspace({ params }: { params: Promise<{ caseId: st
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {caseData.timeline?.map((event: any, i: number) => (
+                      {Array.isArray(caseData.timeline) && caseData.timeline.map((event: Record<string, unknown>, i: number) => (
                         <div key={i} className="flex gap-3">
                           <div className="relative mt-1 flex flex-col items-center">
                             <div className="size-2 rounded-full bg-slate-300" />
