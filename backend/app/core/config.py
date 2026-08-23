@@ -18,10 +18,8 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # --- Database ---
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL",
-        "postgresql://postgres:postgres@localhost:5432/nyaya_saathi",
-    )
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./nyayasaathi.db")
+
 
     # --- Security ---
     JWT_SECRET: str = os.getenv("JWT_SECRET", "change-me-in-production")

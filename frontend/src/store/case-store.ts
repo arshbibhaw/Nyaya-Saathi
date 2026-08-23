@@ -56,7 +56,7 @@ export const useCaseStore = create<CaseState>()((set, get) => ({
 
   loadCase: async (caseId: string) => {
     // Check if we already have it
-    const existing = get().cases.find((c) => c.case_id === caseId);
+    const existing = get().cases.find((c) => c.id === caseId);
     if (existing) {
       set({ activeCase: existing });
       return;

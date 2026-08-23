@@ -102,7 +102,7 @@ export default function DashboardPage() {
                 </div>
               ) : cases.length > 0 ? (
                 cases.map((c) => (
-                  <Link key={c.case_id} href={`/cases/${c.case_id}/chat`} className="block hover:bg-slate-50 transition-colors">
+                  <Link key={c.id} href={`/cases/${c.id}`} className="block hover:bg-slate-50 transition-colors">
                     <div className="flex items-center justify-between px-6 py-4">
                       <div className="flex items-start gap-4">
                         <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500">
@@ -120,7 +120,7 @@ export default function DashboardPage() {
                             {c.issue}
                           </p>
                           <div className="mt-2 flex items-center gap-4 text-xs text-slate-400 font-medium">
-                            <span>ID: {c.case_id.split('-')[0].toUpperCase()}</span>
+                            <span>ID: {c.id.split('-')[0].toUpperCase()}</span>
                             <span>•</span>
                             <span>{format(new Date(c.created_at), 'MMM d, yyyy')}</span>
                           </div>
