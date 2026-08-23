@@ -20,12 +20,17 @@ export interface UserOut {
 export interface Case {
   id: string;
   title?: string;
+  description?: string;
   domain: string;
   issue: string;
+  subcategory?: string;
+  urgency?: string;
+  location?: string;
   status: CaseStatus | string;
   summary?: string;
   timeline?: { event: string; time: string; [key: string]: unknown }[];
   created_at: string;
+  updated_at?: string;
 }
 
 export type CaseStatus =
@@ -34,21 +39,30 @@ export type CaseStatus =
   | "analyzing"
   | "plan_generated"
   | "resolved"
-  | "escalated";
+  | "escalated"
+  | "ACTIVE"
+  | "DRAFT"
+  | "ACTION_REQUIRED"
+  | "ESCALATED"
+  | "RESOLVED"
+  | "ARCHIVED";
 
 // ── Evidence ────────────────────────────────────────────────────────────────
 
 export interface ExtractedEntities {
-  dates: string[];
-  amounts: string[];
-  parties: string[];
+  dates?: string[];
+  amounts?: string[];
+  parties?: string[];
 }
 
 export interface EvidenceResponse {
-  evidence_id: string;
+  id?: string;
+  evidence_id?: string;
   file_name: string;
   mime_type: string;
-  extracted_entities: ExtractedEntities;
+  extracted_text?: string;
+  extracted_entities?: ExtractedEntities;
+  created_at?: string;
 }
 
 // ── Chat ────────────────────────────────────────────────────────────────────
@@ -71,7 +85,10 @@ export interface Citation {
 
 export interface ChatResponse {
   reply: string;
+  response?: string;
   citations?: Citation[];
+  sources?: any[];
+  follow_up_questions?: string[];
 }
 
 // ── Action Plan ─────────────────────────────────────────────────────────────
@@ -80,12 +97,14 @@ export interface ActionPlanStep {
   step: number;
   title: string;
   description: string;
-  status?: "pending" | "in_progress" | "done";
+  status?: "pending" | "in_progress" | "done" | "completed" | "PENDING" | "IN_PROGRESS" | "COMPLETED" | string;
 }
 
 export interface ActionPlan {
+  id?: string;
   case_id: string;
-  plan_status: "generating" | "generated" | "failed";
+  plan_status?: "generating" | "generated" | "failed" | string;
+  status?: string;
   steps: ActionPlanStep[];
 }
 
@@ -94,7 +113,8 @@ export interface ActionPlan {
 export interface GeneratedDocument {
   id: string;
   case_id: string;
-  doc_type: "complaint" | "notice" | "letter";
+  doc_type: "complaint" | "notice" | "letter" | "legal_notice" | string;
   content: string;
-  generated_at: string;
+  generated_at?: string;
 }
+

@@ -28,8 +28,13 @@ def create_case(
     user: User = Depends(get_current_user),
 ):
     """Create a new case from a natural-language issue description."""
-    case = classify_and_create_case(db, user.id, payload.initial_issue, location=payload.location)
-    return case
+    try:
+        case = classify_and_create_case(db, user.id, payload.initial_issue, location=payload.location)
+        return case
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Case creation failed: {str(e)}")
 
 
 @router.get("/", response_model=list[CaseResponse])
@@ -165,14 +170,15 @@ def classify_case(
 
 # ── Chat ─────────────────────────────────────────────────────────────────────
 
-@router.post("/{case_id}/chat")
+@router.post("/{case_id}/chat", response_model=ChatResponse)
 def chat(
     case_id: str,
     payload: ChatMessage,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Send a message in the context of a case and stream an AI response."""
+    """Send a message in the context of a case and receive AI legal navigator guidance."""
+    from app.services.case_service import handle_chat
     case = db.query(Case).filter(Case.id == case_id, Case.user_id == user.id).first()
     if not case:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
@@ -182,7 +188,26 @@ def chat(
     db.add(user_msg)
     db.commit()
 
-    # Stream AI response
+    return handle_chat(db, case, payload.message)
+
+
+@router.post("/{case_id}/chat/stream")
+def chat_stream(
+    case_id: str,
+    payload: ChatMessage,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Send a message in the context of a case and stream an AI response via SSE."""
+    case = db.query(Case).filter(Case.id == case_id, Case.user_id == user.id).first()
+    if not case:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
+
+    # Persist the user message
+    user_msg = CaseQuestion(case_id=case_id, question=payload.message, role="user")
+    db.add(user_msg)
+    db.commit()
+
     return StreamingResponse(
         handle_chat_stream(db, case, payload.message),
         media_type="text/event-stream"

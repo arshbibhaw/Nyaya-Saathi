@@ -5,6 +5,7 @@ Case service — orchestrates AI calls for case creation, chat, plans, and docum
 import json
 import logging
 import os
+import re
 from sqlalchemy.orm import Session
 
 from app.models.case import Case
@@ -29,7 +30,7 @@ def classify_and_create_case(db: Session, user_id: str, initial_issue: str, loca
     4. Automatically generates the structured Action Plan.
     5. Automatically generates the Draft Document (if applicable).
     """
-    # 1. Advanced 11-Phase Analysis
+    # 1. Advanced Analysis & Classification
     analysis = analyze_and_classify_legal_matter(initial_issue)
 
     # 2. Persist Case with all spec-required fields
@@ -57,31 +58,31 @@ def classify_and_create_case(db: Session, user_id: str, initial_issue: str, loca
     steps = [
         {
             "step": 1,
-            "title": "Immediate Preservation",
+            "title": "Immediate Evidence Preservation",
             "description": analysis.immediate_preservation_step,
             "status": "PENDING",
         },
         {
             "step": 2,
-            "title": "Communication or Notice",
+            "title": "Statutory Notice or Communication",
             "description": analysis.communication_or_notice_step,
             "status": "PENDING",
         },
         {
             "step": 3,
-            "title": "Statutory Authority or Court",
+            "title": "Filing with Regulatory / Judicial Authority",
             "description": analysis.statutory_authority_or_court_step,
             "status": "PENDING",
         },
         {
             "step": 4,
-            "title": "Time Sensitive Actions",
+            "title": "Time-Sensitive Limitation Actions",
             "description": analysis.time_sensitive_actions,
             "status": "PENDING",
         },
         {
             "step": 5,
-            "title": "Escalation Path",
+            "title": "Escalation & Enforcement Roadmap",
             "description": analysis.escalation_path,
             "status": "PENDING",
         },
@@ -114,33 +115,47 @@ def classify_and_create_case(db: Session, user_id: str, initial_issue: str, loca
 def handle_chat(db: Session, case: Case, message: str) -> ChatResponse:
     """
     Handle a single chat turn:
-    Mocked to avoid OpenAI API calls.
+    Analyzes case domain, question context, and returns tailored Indian legal guidance.
     """
-    ai_text = (
-        f"Based on the analysis of your case ({case.domain}), regarding your question: '{message}', "
-        f"I recommend referring to the Action Plan for the immediate next steps. "
-        f"Please ensure you preserve all relevant evidence such as invoices and communication logs."
+    from app.ai.chat_engine import generate_dynamic_chat_response
+
+    # Gather past conversation history
+    history = (
+        db.query(CaseQuestion)
+        .filter(CaseQuestion.case_id == case.id)
+        .order_by(CaseQuestion.timestamp)
+        .all()
+    )
+    history_dicts = [
+        {"role": q.role, "content": q.question} for q in history
+    ]
+
+    ai_text, sources, follow_ups = generate_dynamic_chat_response(
+        case_domain=case.domain,
+        case_issue=case.issue,
+        case_description=case.description or case.summary,
+        case_location=case.location,
+        user_message=message,
+        conversation_history=history_dicts,
     )
 
-    sources = [
-        {"title": "Consumer Protection Act, 2019", "source_url": "#"},
-        {"title": "Indian Contract Act, 1872", "source_url": "#"}
-    ]
+    # Persist assistant turn in DB
+    ai_msg = CaseQuestion(case_id=case.id, question=ai_text, role="assistant")
+    db.add(ai_msg)
+    db.commit()
 
     return ChatResponse(
         response=ai_text,
+        reply=ai_text,
         sources=sources,
-        follow_up_questions=["Do you have any other questions regarding this matter?"],
+        follow_up_questions=follow_ups,
     )
+
 
 
 def handle_chat_stream(db: Session, case: Case, message: str):
     """
-    Handle a single chat turn as an SSE stream:
-    1. Retrieve relevant legal context via RAG.
-    2. Yield sources immediately.
-    3. Stream AI response chunks.
-    4. Persist the full response to DB once complete.
+    Handle a single chat turn as an SSE stream.
     """
     # 1. Retrieve legal context
     context_chunks = retrieve_relevant_legal_sources(
@@ -165,6 +180,8 @@ def handle_chat_stream(db: Session, case: Case, message: str):
         {"title": c.get("title", ""), "source_url": c.get("source_url", "")}
         for c in context_chunks
     ]
+    if not sources:
+        sources = [{"title": f"{case.domain or 'Indian Statutory Law'} Framework", "source_url": "https://indiacode.nic.in"}]
 
     # Yield sources first
     yield f"data: {json.dumps({'type': 'sources', 'sources': sources})}\n\n"
@@ -179,22 +196,26 @@ def handle_chat_stream(db: Session, case: Case, message: str):
         full_response += chunk
         yield f"data: {json.dumps({'type': 'chunk', 'text': chunk})}\n\n"
 
-    # 4. Persist the AI response
-    ai_msg = CaseQuestion(case_id=case.id, question=full_response, role="assistant")
-    db.add(ai_msg)
-    db.commit()
+    # If stream was empty, use handle_chat logic
+    if not full_response.strip():
+        resp = handle_chat(db, case, message)
+        full_response = resp.reply or resp.response or "Legal guidance processed."
+        yield f"data: {json.dumps({'type': 'chunk', 'text': full_response})}\n\n"
+    else:
+        # Persist the AI response
+        ai_msg = CaseQuestion(case_id=case.id, question=full_response, role="assistant")
+        db.add(ai_msg)
+        db.commit()
 
 
 def generate_action_plan_with_llm(db: Session, case: Case) -> ActionPlan:
     """
-    Generate an action plan using the LLM, with a static fallback.
+    Generate an action plan using LLM or structured classification.
     """
-    # Check for existing plan
     plan = db.query(ActionPlan).filter(ActionPlan.case_id == case.id).first()
     if plan:
         return plan
 
-    # Try LLM generation
     steps = _llm_generate_action_plan(case)
 
     plan = ActionPlan(
@@ -209,84 +230,73 @@ def generate_action_plan_with_llm(db: Session, case: Case) -> ActionPlan:
 
 
 def _llm_generate_action_plan(case: Case) -> list[dict]:
-    """Call the LLM to generate action plan steps."""
-    from openai import OpenAI
-    from app.ai.prompts.templates import ACTION_PLAN_PROMPT
+    """Call LLM or generate domain-calibrated action plan steps."""
+    api_key = os.getenv("LLM_API_KEY", "") or os.getenv("OPENAI_API_KEY", "")
+    if api_key:
+        try:
+            from openai import OpenAI
+            from app.ai.prompts.templates import ACTION_PLAN_PROMPT
+            client = OpenAI(api_key=api_key, timeout=3.0, max_retries=0)
+            prompt = ACTION_PLAN_PROMPT.format(
+                domain=case.domain or "unknown",
+                issue=case.issue or "unknown",
+                summary=case.description or case.summary or "No summary",
+                evidence_summary="No evidence uploaded yet.",
+            )
+            response = client.chat.completions.create(
+                model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.3,
+            )
+            content = response.choices[0].message.content.strip()
+            start = content.find("[")
+            end = content.rfind("]") + 1
+            if start >= 0 and end > start:
+                steps = json.loads(content[start:end])
+                for s in steps:
+                    s.setdefault("status", "PENDING")
+                return steps
+        except Exception as e:
+            logger.warning("LLM action plan generation failed: %s", e)
 
-    api_key = os.getenv("LLM_API_KEY", "")
-    if not api_key:
-        return _fallback_action_plan_steps(case.domain)
-
-    client = OpenAI(api_key=api_key)
-
-    prompt = ACTION_PLAN_PROMPT.format(
-        domain=case.domain or "unknown",
-        issue=case.issue or "unknown",
-        summary=case.description or case.summary or "No summary",
-        evidence_summary="No evidence uploaded yet.",
-    )
-
-    try:
-        response = client.chat.completions.create(
-            model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3,
-        )
-        content = response.choices[0].message.content.strip()
-        start = content.find("[")
-        end = content.rfind("]") + 1
-        if start >= 0 and end > start:
-            steps = json.loads(content[start:end])
-            # Ensure each step has a status
-            for s in steps:
-                s.setdefault("status", "PENDING")
-            return steps
-    except Exception as e:
-        logger.warning("LLM action plan generation failed: %s", e)
-
-    return _fallback_action_plan_steps(case.domain)
-
-
-def _fallback_action_plan_steps(domain: str | None) -> list[dict]:
-    """Static fallback action plan steps."""
+    # Use analysis from classifier
+    analysis = analyze_and_classify_legal_matter(case.description or case.summary or case.issue or "")
     return [
-        {"step": 1, "title": "Collect Evidence", "description": "Gather all relevant documents and communications.", "status": "PENDING"},
-        {"step": 2, "title": "Document the Issue", "description": "Write a clear timeline of events with dates and details.", "status": "PENDING"},
-        {"step": 3, "title": "Send Written Notice", "description": "Send a formal written complaint or notice to the other party.", "status": "PENDING"},
-        {"step": 4, "title": "File Official Complaint", "description": "Submit a complaint with the relevant authority or consumer forum.", "status": "PENDING"},
-        {"step": 5, "title": "Seek Legal Assistance", "description": "Consult a lawyer or legal aid service if the issue remains unresolved.", "status": "PENDING"},
+        {"step": 1, "title": "Immediate Preservation", "description": analysis.immediate_preservation_step, "status": "PENDING"},
+        {"step": 2, "title": "Communication or Notice", "description": analysis.communication_or_notice_step, "status": "PENDING"},
+        {"step": 3, "title": "Statutory Authority / Court", "description": analysis.statutory_authority_or_court_step, "status": "PENDING"},
+        {"step": 4, "title": "Time-Sensitive Actions", "description": analysis.time_sensitive_actions, "status": "PENDING"},
+        {"step": 5, "title": "Escalation & Enforcement", "description": analysis.escalation_path, "status": "PENDING"},
     ]
 
 
 def generate_document_with_llm(db: Session, case: Case, doc_type: str = "complaint") -> Document:
     """
-    Generate a legal document draft using the LLM.
+    Generate a legal document draft using LLM or structured classification.
     """
-    from openai import OpenAI
-    from app.ai.prompts.templates import DOCUMENT_DRAFT_PROMPT
-
-    api_key = os.getenv("LLM_API_KEY", "")
+    api_key = os.getenv("LLM_API_KEY", "") or os.getenv("OPENAI_API_KEY", "")
     content = ""
 
     if api_key:
-        client = OpenAI(api_key=api_key)
-
-        # Gather evidence summary
-        from app.models.evidence import Evidence
-        evidence_items = db.query(Evidence).filter(Evidence.case_id == case.id).all()
-        evidence_summary = "\n".join(
-            f"- {e.file_name}: {(e.extracted_text or '')[:200]}" for e in evidence_items
-        ) if evidence_items else "No evidence uploaded yet."
-
-        prompt = DOCUMENT_DRAFT_PROMPT.format(
-            doc_type=doc_type,
-            domain=case.domain or "unknown",
-            issue=case.issue or "unknown",
-            summary=case.description or case.summary or "No summary",
-            evidence_summary=evidence_summary,
-        )
-
         try:
+            from openai import OpenAI
+            from app.ai.prompts.templates import DOCUMENT_DRAFT_PROMPT
+            from app.models.evidence import Evidence
+            client = OpenAI(api_key=api_key, timeout=3.0, max_retries=0)
+
+            evidence_items = db.query(Evidence).filter(Evidence.case_id == case.id).all()
+            evidence_summary = "\n".join(
+                f"- {e.file_name}: {(e.extracted_text or '')[:200]}" for e in evidence_items
+            ) if evidence_items else "No evidence uploaded yet."
+
+            prompt = DOCUMENT_DRAFT_PROMPT.format(
+                doc_type=doc_type,
+                domain=case.domain or "unknown",
+                issue=case.issue or "unknown",
+                summary=case.description or case.summary or "No summary",
+                evidence_summary=evidence_summary,
+            )
+
             response = client.chat.completions.create(
                 model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
                 messages=[{"role": "user", "content": prompt}],
@@ -311,14 +321,28 @@ def generate_document_with_llm(db: Session, case: Case, doc_type: str = "complai
 
 
 def _fallback_document(case: Case, doc_type: str) -> str:
-    """Static fallback document when LLM is unavailable."""
+    """Dynamic domain-aware document draft."""
+    analysis = analyze_and_classify_legal_matter(case.description or case.summary or case.issue or "")
+    if analysis.legal_notice:
+        return f"""{analysis.legal_notice.title}
+{'=' * 50}
+
+SUBJECT: {analysis.legal_notice.subject}
+
+{analysis.legal_notice.notice_text}
+
+---
+DISCLAIMER: This is an AI-generated draft prepared by Nyaya Saathi.
+It is for informational purposes and should be reviewed before formal submission.
+"""
+
     return f"""DRAFT {doc_type.upper()}
 {'=' * 40}
 
 SUBJECT: {case.issue or 'Legal Matter'}
 
 Date: [Date]
-To: [Recipient Name and Address]
+To: [Opposite Party / Authority Name and Address]
 From: [Your Name and Address]
 
 Dear Sir/Madam,
@@ -327,28 +351,23 @@ I am writing to formally bring to your attention the following matter:
 
 {case.description or case.summary or 'Please provide case details.'}
 
-Domain: {case.domain or 'Not classified'}
-Issue: {case.issue or 'Not specified'}
+Legal Domain: {case.domain or 'General Civil'}
+Applicable Law: {case.issue or 'Statutory provisions'}
 
-I request your immediate attention to this matter and a resolution within a reasonable timeframe.
+I request your immediate attention to this matter and a resolution within 15 days.
 
 Sincerely,
 [Your Name]
 [Your Contact Information]
 
 ---
-DISCLAIMER: This is an AI-generated draft document prepared by Nyaya Saathi.
-It is for informational purposes only and should be reviewed by a qualified
-legal professional before submission.
+DISCLAIMER: This is an AI-generated draft prepared by Nyaya Saathi.
 """
 
 
-# Legacy compatibility aliases
 def generate_action_plan(db: Session, case: Case) -> ActionPlan:
-    """Legacy wrapper — redirects to generate_action_plan_with_llm."""
     return generate_action_plan_with_llm(db, case)
 
 
 def generate_document_draft(db: Session, case: Case) -> Document:
-    """Legacy wrapper — redirects to generate_document_with_llm."""
     return generate_document_with_llm(db, case, "legal_notice")

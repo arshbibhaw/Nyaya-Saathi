@@ -52,8 +52,13 @@ class ChatMessage(BaseModel):
 class ChatResponse(BaseModel):
     """AI response to a chat message."""
     response: str
+    reply: str | None = None
     sources: list[dict] = []
     follow_up_questions: list[str] = []
+
+    def model_post_init(self, __context):
+        if not self.reply:
+            self.reply = self.response
 
 
 class MessageResponse(BaseModel):

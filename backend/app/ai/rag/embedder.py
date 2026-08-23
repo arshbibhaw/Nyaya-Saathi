@@ -48,14 +48,14 @@ def get_embedding(text: str) -> List[float]:
 
     Returns a 1536-dimensional float vector.
     """
-    api_key = settings.EMBEDDING_API_KEY.strip()
+    api_key = getattr(settings, "EMBEDDING_API_KEY", getattr(settings, "OPENAI_API_KEY", "")).strip()
     if api_key and not api_key.startswith("sk-..."):
         try:
             from openai import OpenAI
 
             client = OpenAI(api_key=api_key)
             response = client.embeddings.create(
-                model=settings.EMBEDDING_MODEL,
+                model=getattr(settings, "EMBEDDING_MODEL", "text-embedding-3-small"),
                 input=text,
             )
             return response.data[0].embedding
@@ -67,18 +67,18 @@ def get_embedding(text: str) -> List[float]:
 
 def get_embeddings_batch(texts: List[str]) -> List[List[float]]:
     """Generate embedding vectors for a batch of texts."""
-    api_key = settings.EMBEDDING_API_KEY.strip()
+    api_key = getattr(settings, "EMBEDDING_API_KEY", getattr(settings, "OPENAI_API_KEY", "")).strip()
     if api_key and not api_key.startswith("sk-..."):
         try:
             from openai import OpenAI
 
             client = OpenAI(api_key=api_key)
             response = client.embeddings.create(
-                model=settings.EMBEDDING_MODEL,
+                model=getattr(settings, "EMBEDDING_MODEL", "text-embedding-3-small"),
                 input=texts,
             )
             return [item.embedding for item in response.data]
         except Exception as e:
             logger.warning("OpenAI batch embedding call failed: %s. Falling back to local embedder.", e)
 
-    return [_generate_fallback_embedding(t, dimensions=settings.EMBEDDING_DIMENSIONS) for t in texts]
+    return [_generate_fallback_embedding(t, dimensions=getattr(settings, "EMBEDDING_DIMENSIONS", 1536)) for t in texts]
