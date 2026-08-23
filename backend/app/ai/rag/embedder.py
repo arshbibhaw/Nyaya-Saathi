@@ -13,10 +13,9 @@ import logging
 import math
 from typing import List, Optional
 
-from app.core.config import get_settings
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
-settings = get_settings()
 
 
 def _generate_fallback_embedding(text: str, dimensions: int = 1536) -> List[float]:

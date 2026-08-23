@@ -21,10 +21,9 @@ import pymupdf  # PyMuPDF (replaces deprecated 'fitz' import)
 import pytesseract
 from PIL import Image
 
-from app.core.config import get_settings
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
-settings = get_settings()
 
 # Configure tesseract binary path from env
 pytesseract.pytesseract.tesseract_cmd = settings.TESSERACT_CMD

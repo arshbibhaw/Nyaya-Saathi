@@ -1,17 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { 
   Plus, 
   FolderOpen, 
-  Clock, 
   AlertCircle,
   FileText,
   Upload,
   ArrowRight,
-  MoreVertical,
-  Briefcase
+  Briefcase,
+  Clock
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -19,19 +18,33 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
-import { useCaseStore } from "@/store/case-store";
-import type { Case } from "@/lib/types";
+import { FadeIn } from "@/components/fade-in";
 import { format } from "date-fns";
+
+// Use highly realistic dummy data as requested
+const dummyCases = [
+  { id: "CASE-4921", domain: "Cyber Fraud Dispute", issue: "Unauthorized deduction of ₹45,000 from ICICI bank account", status: "pending_evidence", created_at: "2023-11-05T10:00:00Z" },
+  { id: "CASE-3844", domain: "Consumer Court Notice", issue: "Defective laptop delivered by e-commerce platform, no refund issued", status: "analyzing", created_at: "2023-11-08T14:30:00Z" },
+  { id: "CASE-2109", domain: "Employment Dispute", issue: "Unpaid severance and wrongful termination from tech startup", status: "plan_generated", created_at: "2023-10-22T09:15:00Z" }
+];
+
+const dummyActivities = [
+  { id: 1, action: "AI analyzed your screenshots", case: "Cyber Fraud Dispute", time: "2 hours ago" },
+  { id: 2, action: "Drafted Consumer Complaint", case: "Consumer Court Notice", time: "5 hours ago" },
+  { id: 3, action: "Legal Action Plan generated", case: "Employment Dispute", time: "1 day ago" },
+];
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { cases, isLoading, fetchCases } = useCaseStore();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchCases();
-  }, [fetchCases]);
+    // Simulate loading for the premium feel
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
-  const activeCases = cases.filter(c => c.status !== "resolved" && c.status !== "escalated").length;
+  const activeCases = dummyCases.filter(c => c.status !== "resolved").length;
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -40,158 +53,133 @@ export default function DashboardPage() {
     return "Good evening";
   };
 
-  const getStatusBadge = (status: Case["status"]) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case "open":
       case "analyzing":
-        return <Badge variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-200">Active</Badge>;
+        return <Badge variant="secondary" className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">Analyzing</Badge>;
       case "pending_evidence":
-        return <Badge variant="outline" className="text-amber-700 border-amber-200 bg-amber-50">Action Required</Badge>;
+        return <Badge variant="outline" className="text-amber-700 border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400">Action Required</Badge>;
       case "plan_generated":
-        return <Badge variant="outline" className="text-emerald-700 border-emerald-200 bg-emerald-50">Plan Ready</Badge>;
-      case "resolved":
-        return <Badge variant="secondary" className="bg-slate-100 text-slate-500">Completed</Badge>;
-      case "escalated":
-        return <Badge variant="destructive">Escalated</Badge>;
+        return <Badge variant="outline" className="text-emerald-700 border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400">Plan Ready</Badge>;
       default:
-        return <Badge variant="outline">Unknown</Badge>;
+        return <Badge variant="outline">Active</Badge>;
     }
   };
 
-  // Mock activity timeline
-  const activities = [
-    { id: 1, action: "Case created", case: "Cyber Financial Fraud", time: "2 hours ago" },
-    { id: 2, action: "Evidence uploaded", case: "Cyber Financial Fraud", time: "2 hours ago" },
-    { id: 3, action: "Action plan generated", case: "Employment Dispute", time: "1 day ago" },
-  ];
-
   return (
-    <div className="mx-auto max-w-5xl space-y-8 p-6 md:p-8">
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <FadeIn className="mx-auto max-w-5xl space-y-8 p-6 md:p-8">
+      {/* Welcome Header */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between border-b border-slate-200 dark:border-slate-800 pb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 font-display">
             {getGreeting()}, {user?.full_name?.split(" ")[0] || "User"}
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            You have {activeCases} active matters requiring attention.
+          <p className="text-slate-600 dark:text-slate-400 mt-2 text-lg">
+            You have <span className="font-semibold text-amber-600 dark:text-amber-500">{activeCases} active matters</span> requiring attention.
           </p>
         </div>
-        <Link href="/cases/new">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm gap-2">
-            <Plus className="size-4" />
-            New Matter
-          </Button>
-        </Link>
+        <div className="flex gap-3">
+          <Link href="/documents/new">
+            <Button variant="outline" className="shadow-sm gap-2 bg-white dark:bg-slate-900 hover:-translate-y-1 transition-transform">
+              <Upload className="size-4" />
+              Upload Evidence
+            </Button>
+          </Link>
+          <Link href="/cases/new">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm gap-2 hover:-translate-y-1 transition-transform">
+              <Plus className="size-4" />
+              Start a New Case
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-8 md:grid-cols-3">
         {/* Cases List */}
         <div className="md:col-span-2 space-y-6">
-          <div className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
-            <div className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-6 py-4">
-              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Active Matters</h2>
-            </div>
-            
-            <div className="divide-y divide-slate-100">
-              {isLoading ? (
-                <div className="p-6 space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-16 w-full rounded-md" />
-                  ))}
-                </div>
-              ) : cases.length > 0 ? (
-                cases.map((c) => (
-                  <Link key={c.id} href={`/cases/${c.id}`} className="block hover:bg-slate-50 transition-colors">
-                    <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <Briefcase className="size-5 text-blue-600" />
+              Active Matters
+            </h2>
+            <Link href="/cases" className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1">
+              View all <ArrowRight className="size-3" />
+            </Link>
+          </div>
+          
+          <div className="grid gap-4">
+            {isLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-24 w-full rounded-xl" />
+                ))}
+              </div>
+            ) : (
+              dummyCases.map((c) => (
+                <Link key={c.id} href={`/cases/${c.id}`}>
+                  <Card className="group border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900 transition-all cursor-pointer">
+                    <CardContent className="p-5 flex items-center justify-between">
                       <div className="flex items-start gap-4">
-                        <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500">
-                          <Briefcase className="size-4" />
+                        <div className="mt-1 flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 group-hover:scale-110 transition-transform">
+                          <FolderOpen className="size-5" />
                         </div>
                         <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-slate-900 dark:text-slate-100 text-sm">
-                              {/* Using hackathon mock category if present or fallback */}
-                              {"Cyber Financial Fraud" || c.domain}
+                          <div className="flex items-center gap-3 mb-1.5">
+                            <span className="font-bold text-slate-900 dark:text-slate-100">
+                              {c.domain}
                             </span>
                             {getStatusBadge(c.status)}
                           </div>
-                          <p className="text-sm text-slate-500 line-clamp-1 max-w-md">
+                          <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-1 max-w-md mb-2">
                             {c.issue}
                           </p>
-                          <div className="mt-2 flex items-center gap-4 text-xs text-slate-400 font-medium">
-                            <span>ID: {c.id.split('-')[0].toUpperCase()}</span>
-                            <span>•</span>
-                            <span>{format(new Date(c.created_at), 'MMM d, yyyy')}</span>
+                          <div className="flex items-center gap-4 text-xs text-slate-400 font-medium">
+                            <span className="flex items-center gap-1"><FileText className="size-3"/> {c.id}</span>
+                            <span className="flex items-center gap-1"><Clock className="size-3"/> {format(new Date(c.created_at), 'MMM d, yyyy')}</span>
                           </div>
                         </div>
                       </div>
-                      <ArrowRight className="size-4 text-slate-300" />
-                    </div>
-                  </Link>
-                ))
-              ) : (
-                <div className="flex flex-col items-center justify-center p-12 text-center">
-                  <FolderOpen className="size-8 text-slate-300 dark:text-slate-600 mb-3" />
-                  <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">No active matters</h3>
-                  <p className="mt-1 text-sm text-slate-500">Get started by creating a new case.</p>
-                </div>
-              )}
-            </div>
+                      <ArrowRight className="size-5 text-slate-300 dark:text-slate-600 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))
+            )}
           </div>
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Recent Activity */}
-          <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
-            <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
-              <CardTitle className="text-sm font-semibold text-slate-900 dark:text-slate-100">Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <div className="space-y-4">
-                {activities.map((act, i) => (
-                  <div key={act.id} className="flex gap-3">
-                    <div className="relative mt-1 flex h-full flex-col items-center">
-                      <div className="size-2 rounded-full bg-blue-600" />
-                      {i !== activities.length - 1 && (
-                        <div className="absolute top-3 bottom-[-16px] w-px bg-slate-200" />
-                      )}
+        <div className="space-y-8">
+          {/* Recent Activity Timeline */}
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6 flex items-center gap-2">
+              <Clock className="size-5 text-blue-600" />
+              Recent Activity
+            </h2>
+            <Card className="border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900/50">
+              <CardContent className="p-6">
+                <div className="space-y-6">
+                  {dummyActivities.map((act, i) => (
+                    <div key={act.id} className="flex gap-4">
+                      <div className="relative flex flex-col items-center">
+                        <div className="size-3 rounded-full bg-blue-600 ring-4 ring-blue-50 dark:ring-blue-900/30" />
+                        {i !== dummyActivities.length - 1 && (
+                          <div className="absolute top-4 bottom-[-24px] w-0.5 bg-slate-100 dark:bg-slate-800" />
+                        )}
+                      </div>
+                      <div className="pb-2">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{act.action}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{act.case}</p>
+                        <p className="mt-1.5 text-xs font-medium text-slate-400 uppercase tracking-wider">{act.time}</p>
+                      </div>
                     </div>
-                    <div className="pb-2">
-                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{act.action}</p>
-                      <p className="text-xs text-slate-500">{act.case}</p>
-                      <p className="mt-1 text-xs font-medium text-slate-400">{act.time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Quick Links */}
-          <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
-            <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
-              <CardTitle className="text-sm font-semibold text-slate-900 dark:text-slate-100">Quick Links</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-2 px-2">
-              <nav className="flex flex-col gap-1">
-                <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800">
-                  <Upload className="mr-3 size-4 text-slate-400" /> Upload Evidence
-                </Button>
-                <Link href="/dashboard/plans">
-                  <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800">
-                    <FileText className="mr-3 size-4 text-slate-400" /> View Action Plans
-                  </Button>
-                </Link>
-                <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800">
-                  <AlertCircle className="mr-3 size-4 text-slate-400" /> Legal Resources
-                </Button>
-              </nav>
-            </CardContent>
-          </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
-    </div>
+    </FadeIn>
   );
 }

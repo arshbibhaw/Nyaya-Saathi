@@ -11,6 +11,7 @@ export interface AuthResponse {
 export interface UserOut {
   id: string;
   email: string;
+  username: string | null;
   full_name: string | null;
 }
 

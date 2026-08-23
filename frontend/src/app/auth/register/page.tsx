@@ -14,6 +14,7 @@ import { useAuthStore } from "@/store/auth-store";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -40,7 +41,7 @@ export default function RegisterPage() {
 
     setIsLoading(true);
     try {
-      await register(email, password, name);
+      await register(email, password, username, name);
       router.push("/dashboard");
     } catch (err) {
       setValidationError(err instanceof Error ? err.message : "Registration failed");
@@ -89,6 +90,17 @@ export default function RegisterPage() {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
+              className="bg-background/50"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              placeholder="johndoe123"
+              required
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="bg-background/50"
             />
           </div>
