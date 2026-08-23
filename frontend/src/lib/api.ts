@@ -27,7 +27,19 @@ async function getAuthHeaders(): Promise<HeadersInit> {
     return {};
   }
   
-  const token = localStorage.getItem("token");
+  let token = localStorage.getItem("token");
+  if (!token) {
+    try {
+      const nyayaAuth = localStorage.getItem("nyaya-auth");
+      if (nyayaAuth) {
+        const parsed = JSON.parse(nyayaAuth);
+        token = parsed?.state?.token || null;
+      }
+    } catch (e) {
+      // Ignore JSON parse errors
+    }
+  }
+
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
