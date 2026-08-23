@@ -66,7 +66,7 @@ async def upload_evidence(
         f.write(contents)
 
     # Run OCR / text extraction
-    extracted_text = extract_text(file_path, file.content_type)
+    extracted_text = extract_text(contents, file.content_type)
 
     # Use LLM to extract entities
     from app.ai.llm.client import LLMClient

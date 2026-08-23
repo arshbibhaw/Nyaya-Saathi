@@ -21,7 +21,6 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { InteractiveBackground } from "@/components/ui/InteractiveBackground";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 /* ─── Data ─────────────────────────────────────────────────────────── */
@@ -148,7 +147,6 @@ export default function LandingPage() {
         className="relative z-10 bg-background shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-b-none mb-0 transition-all duration-300"
         style={{ marginBottom: footerHeight > 0 ? `${footerHeight}px` : "auto" }}
       >
-        <InteractiveBackground />
 
         {/* Scroll progress bar */}
         <motion.div
