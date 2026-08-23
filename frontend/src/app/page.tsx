@@ -277,85 +277,104 @@ export default function LandingPage() {
       </section>
 
       {/* --- Footer --- */}
-      <footer id="connect" className="relative z-10 bg-[#0A1118] text-white overflow-hidden pt-24 pb-12 rounded-t-[3rem]">
+      <footer id="connect" className="relative z-10 bg-[#0A1118] text-white overflow-hidden pt-20 pb-12 rounded-t-[3rem]">
         <div className="mx-auto max-w-7xl px-6 md:px-12 relative z-10">
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-32">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-10">
             
-            {/* Column 1: Brand & Status */}
-            <div className="flex flex-col gap-6 md:col-span-1">
+            {/* Column 1: Brand & Description */}
+            <div className="flex flex-col gap-4 md:col-span-1">
               <div className="flex items-center gap-3">
                 <div className="flex size-10 items-center justify-center rounded-full bg-white text-[#0A1118]">
                   <Scale className="size-5" />
                 </div>
                 <span className="text-2xl font-bold tracking-tight">Nyaya Saathi</span>
               </div>
-              <p className="text-[#8892B0] text-sm leading-relaxed max-w-xs mt-4">
-                An AI-driven legal navigation platform empowering citizens with clear actionable insights.
+              <p className="text-[#8892B0] text-sm leading-relaxed max-w-xs mt-2">
+                An AI-driven legal navigation platform empowering citizens with clear actionable insights and step-by-step guidance.
               </p>
-              
-              <div className="flex items-center gap-3 mt-4 px-4 py-2.5 rounded-full border border-white/10 bg-white/5 w-fit">
-                <div className="size-2 rounded-full bg-[#E85D36] animate-pulse" />
-                <span className="text-xs font-medium text-white/80">Available for instant legal analysis</span>
-              </div>
             </div>
 
             {/* Column 2: Platform */}
             <div className="md:col-start-2">
               <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8892B0] mb-6">Platform</h4>
-              <ul className="flex flex-col gap-4 text-[#CCD6F6] text-sm">
+              <ul className="flex flex-col gap-3.5 text-[#CCD6F6] text-sm">
                 <li><Link href="#features" className="hover:text-white transition-colors">Features</Link></li>
-                <li><Link href="#how-it-works" className="hover:text-white transition-colors">How it works</Link></li>
-                <li><Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link></li>
-                <li><Link href="#faq" className="hover:text-white transition-colors">FAQ</Link></li>
+                <li><Link href="#how-it-works" className="hover:text-white transition-colors">How It Works</Link></li>
+                <li><Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link></li>
+                <li><Link href="/help" className="hover:text-white transition-colors">FAQ</Link></li>
               </ul>
             </div>
 
             {/* Column 3: Resources */}
             <div>
               <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8892B0] mb-6">Resources</h4>
-              <ul className="flex flex-col gap-4 text-[#CCD6F6] text-sm">
-                <li><Link href="#blog" className="hover:text-white transition-colors">Legal Blog</Link></li>
-                <li><Link href="#guides" className="hover:text-white transition-colors">Action Guides</Link></li>
-                <li><Link href="#dictionary" className="hover:text-white transition-colors">Legal Dictionary</Link></li>
-                <li><Link href="#community" className="hover:text-white transition-colors">Community Forum</Link></li>
+              <ul className="flex flex-col gap-3.5 text-[#CCD6F6] text-sm">
+                <li><Link href="/resources/rights" className="hover:text-white transition-colors">Legal Guides</Link></li>
+                <li><Link href="/resources" className="hover:text-white transition-colors">Legal Awareness</Link></li>
+                <li><Link href="/documents" className="hover:text-white transition-colors">Document Vault</Link></li>
+                <li><Link href="/action-plans" className="hover:text-white transition-colors">Action Plans</Link></li>
               </ul>
             </div>
 
             {/* Column 4: Connect */}
             <div>
               <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8892B0] mb-6">Connect</h4>
-              <ul className="flex flex-col gap-4 text-[#CCD6F6] text-sm">
-                <li><Link href="/auth/register" className="hover:text-white transition-colors flex items-center justify-between">Start a case <ArrowUpRight className="size-3 text-[#8892B0]" /></Link></li>
-                <li><Link href="#contact" className="hover:text-white transition-colors flex items-center justify-between">Contact Us <ArrowUpRight className="size-3 text-[#8892B0]" /></Link></li>
-                <li><a href="#" className="hover:text-white transition-colors flex items-center justify-between">Twitter <ArrowUpRight className="size-3 text-[#8892B0]" /></a></li>
-                <li><a href="#" className="hover:text-white transition-colors flex items-center justify-between">LinkedIn <ArrowUpRight className="size-3 text-[#8892B0]" /></a></li>
+              <ul className="flex flex-col gap-3.5 text-[#CCD6F6] text-sm">
+                <li>
+                  <Link href="/help" className="hover:text-white transition-colors flex items-center justify-between">
+                    Contact Us <ArrowUpRight className="size-3 text-[#8892B0]" />
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/cases/new" className="hover:text-white transition-colors flex items-center justify-between">
+                    Start a Case <ArrowUpRight className="size-3 text-[#8892B0]" />
+                  </Link>
+                </li>
+                <li>
+                  <a href="https://github.com" target="_blank" rel="noreferrer" className="hover:text-white transition-colors flex items-center justify-between">
+                    GitHub <ArrowUpRight className="size-3 text-[#8892B0]" />
+                  </a>
+                </li>
+                <li>
+                  <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="hover:text-white transition-colors flex items-center justify-between">
+                    LinkedIn <ArrowUpRight className="size-3 text-[#8892B0]" />
+                  </a>
+                </li>
               </ul>
             </div>
 
           </div>
 
-          {/* Huge Faded Text */}
-          <div className="relative border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-[#8892B0]">
-              © {new Date().getFullYear()} Nyaya Saathi. All rights reserved.
+          {/* Subtle Nyaya Saathi Background Watermark */}
+          <div className="w-full flex justify-center items-center pointer-events-none select-none my-4">
+            <span 
+              className="text-[6.5vw] md:text-[5.5vw] lg:text-[5vw] xl:text-[4.2rem] font-bold tracking-tight text-white/[0.03] leading-none whitespace-nowrap text-center"
+              style={{ WebkitTextStroke: "1px rgba(255,255,255,0.04)" }}
+            >
+              NYAYA SAATHI
+            </span>
+          </div>
+
+          {/* Legal Disclaimer Line */}
+          <div className="pt-4 border-t border-white/10">
+            <p className="text-[11px] text-[#8892B0]/80 leading-relaxed max-w-4xl">
+              Nyaya Saathi provides general legal information and navigation assistance and does not constitute formal legal advice.
             </p>
-            <div className="flex gap-6 text-xs text-[#8892B0]">
-              <a href="#" className="hover:text-white transition-colors">Privacy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms</a>
+          </div>
+
+          {/* Bottom Bar: Left Copyright, Right Legal Links */}
+          <div className="pt-4 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#8892B0]">
+            <p>© {new Date().getFullYear()} Nyaya Saathi. All rights reserved.</p>
+            <div className="flex items-center gap-4">
+              <Link href="/help" className="hover:text-white transition-colors">Privacy Policy</Link>
+              <span>·</span>
+              <Link href="/help" className="hover:text-white transition-colors">Terms of Use</Link>
+              <span>·</span>
+              <Link href="/help" className="hover:text-white transition-colors">Disclaimer</Link>
             </div>
           </div>
-        </div>
 
-        {/* Giant background text (Hirael style) */}
-        {/* Adjusted bottom position to make it more visible above the footer bottom */}
-        <div className="absolute bottom-[2%] left-0 right-0 w-full overflow-hidden flex justify-center pointer-events-none select-none z-0">
-          <span 
-            className="text-[17vw] font-bold tracking-tighter text-white/[0.04] leading-none"
-            style={{ WebkitTextStroke: "1px rgba(255,255,255,0.06)" }}
-          >
-            NyayaSaathi
-          </span>
         </div>
       </footer>
     </div>
