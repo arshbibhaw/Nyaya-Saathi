@@ -1,545 +1,340 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import {
-  Scale,
-  Compass,
-  FileSearch,
-  ClipboardList,
-  FileSignature,
-  ArrowRight,
-  Sparkles,
-  ChevronRight,
-  Shield,
-  Zap,
-  Users,
-  BookOpen,
-  MessageSquare,
-  Maximize2,
-  X,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { InteractiveBackground } from "@/components/ui/InteractiveBackground";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ArrowRight, Scale, Menu, X, ArrowUpRight, Compass, FileSearch, ClipboardList, Zap } from "lucide-react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
-/* ─── Data ─────────────────────────────────────────────────────────── */
+import { Button } from "@/components/ui/button";
 
 const features = [
   {
     icon: Compass,
     title: "AI Legal Navigator",
-    description:
-      "Describe your problem in plain language. Our AI identifies the relevant laws and your legal options instantly.",
-    details: "Nyaya Saathi's advanced natural language processing understands context, translating your everyday problem into exact legal statutes.",
-    bullets: ["Instant statute matching", "Precedent case suggestions", "Simple language explanations"],
-    gradient: "from-[#344E5C] to-[#557A61]",
+    description: "Describe your problem in plain language. Our AI identifies the relevant laws and your legal options instantly."
   },
   {
     icon: FileSearch,
     title: "Evidence Analyzer",
-    description:
-      "Upload PDFs, screenshots, or documents. OCR extracts dates, names, and amounts automatically.",
-    details: "Our intelligent OCR pipeline scans your uploads to automatically flag crucial pieces of evidence that strengthen your case.",
-    bullets: ["Auto-extract dates & amounts", "Highlight key terms", "Format for legal use"],
-    gradient: "from-[#557A61] to-[#A4773C]",
+    description: "Upload PDFs, screenshots, or documents. OCR extracts dates, names, and amounts automatically."
   },
   {
     icon: ClipboardList,
     title: "Smart Action Plans",
-    description:
-      "Get a step-by-step personalized roadmap — who to contact, what to file, and when.",
-    details: "We generate a customized, timeline-driven checklist so you always know your next move and don't miss any critical deadlines.",
-    bullets: ["Step-by-step guidance", "Timeline predictions", "Authority contact info"],
-    gradient: "from-[#A4773C] to-[#A24B45]",
+    description: "Get a step-by-step personalized roadmap — who to contact, what to file, and when."
   },
   {
-    icon: FileSignature,
+    icon: Zap,
     title: "Document Generator",
-    description:
-      "Generate legal complaints, notices, and letters based on your evidence and situation.",
-    details: "Automatically draft professional, legally sound documents tailored exactly to the specifics of your situation.",
-    bullets: ["Custom legal notices", "Complaint drafting", "Print-ready formatting"],
-    gradient: "from-[#344E5C] to-[#A4773C]",
-  },
+    description: "Generate legal complaints, notices, and letters based on your evidence and situation."
+  }
 ];
 
 const steps = [
-  { num: "01", title: "Describe", subtitle: "Tell us your problem in your own words", icon: MessageSquare },
-  { num: "02", title: "Analyze", subtitle: "AI identifies laws & extracts evidence", icon: FileSearch },
-  { num: "03", title: "Plan", subtitle: "Get a clear step-by-step action plan", icon: ClipboardList },
-  { num: "04", title: "Act", subtitle: "Generate documents & take action", icon: Zap },
+  { num: "01", title: "Describe", subtitle: "Tell us your problem in your own words" },
+  { num: "02", title: "Analyze", subtitle: "AI identifies laws & extracts evidence" },
+  { num: "03", title: "Plan", subtitle: "Get a clear step-by-step action plan" },
+  { num: "04", title: "Act", subtitle: "Generate documents & take action" },
 ];
-
-const stats = [
-  { value: "15+", label: "Legal Domains", icon: BookOpen },
-  { value: "AI", label: "Powered Analysis", icon: Sparkles },
-  { value: "24/7", label: "Available", icon: Shield },
-  { value: "100%", label: "Free to Use", icon: Users },
-];
-
-/* ─── Animations ───────────────────────────────────────────────────── */
-
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.12, delayChildren: 0.1 },
-  },
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 40 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.7, ease: [0.25, 0.4, 0.25, 1] as const },
-  },
-};
-
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.9 },
-  show: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.5, ease: [0.25, 0.4, 0.25, 1] as const },
-  },
-};
-
-/* ─── Page ─────────────────────────────────────────────────────────── */
 
 export default function LandingPage() {
-  const [selectedFeature, setSelectedFeature] = useState<typeof features[0] | null>(null);
-  const [scrolled, setScrolled] = useState(false);
-  const [footerHeight, setFooterHeight] = useState(0);
-  const footerRef = useRef<HTMLDivElement>(null);
-  
-  const { scrollYProgress } = useScroll();
-  const heroY = useTransform(scrollYProgress, [0, 0.3], [0, -80]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.25], [1, 0]);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // Measure footer height for the curtain reveal effect
-  useEffect(() => {
-    const updateFooterHeight = () => {
-      if (footerRef.current) {
-        setFooterHeight(footerRef.current.offsetHeight);
-      }
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
     };
-    
-    updateFooterHeight();
-    window.addEventListener("resize", updateFooterHeight);
-    // Slight delay to ensure content is fully rendered
-    setTimeout(updateFooterHeight, 100);
-    
-    return () => window.removeEventListener("resize", updateFooterHeight);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
-    <div className="bg-background">
-      {/* ─── Curtain Wrapper ───────────────────────────────────────── */}
-      <main 
-        className="relative z-10 bg-background shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-b-none mb-0 transition-all duration-300"
-        style={{ marginBottom: footerHeight > 0 ? `${footerHeight}px` : "auto" }}
-      >
-        <InteractiveBackground />
-
-        {/* Scroll progress bar */}
-        <motion.div
-          className="fixed top-0 left-0 right-0 h-[3px] z-50 origin-left gradient-primary"
-          style={{ scaleX: scrollYProgress }}
+    <div className="relative min-h-screen bg-[#FCFCFD] text-[#0F172A] selection:bg-slate-900 selection:text-white overflow-hidden font-sans">
+      
+      {/* --- Animated Iridescent Background --- */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-br from-pink-200/40 via-red-100/40 to-transparent blur-[120px] mix-blend-multiply animate-blob" />
+        <div className="absolute top-[20%] right-[-10%] w-[45vw] h-[45vw] rounded-full bg-gradient-to-bl from-orange-200/40 via-yellow-100/40 to-transparent blur-[120px] mix-blend-multiply animate-blob animation-delay-2000" />
+        <div className="absolute bottom-[-20%] left-[15%] w-[60vw] h-[60vw] rounded-full bg-gradient-to-tr from-slate-200/60 via-indigo-100/30 to-transparent blur-[140px] mix-blend-multiply animate-blob animation-delay-4000" />
+        
+        <div 
+          className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
+          style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')" }}
         />
-
-        {/* Background gradient blobs */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-b-none">
-          <div className="absolute -top-40 -left-40 size-[600px] rounded-full bg-primary/8 blur-[140px] animate-pulse" />
-          <div className="absolute top-1/3 -right-40 size-[500px] rounded-full bg-accent/8 blur-[140px]" />
-          <div className="absolute -bottom-40 left-1/3 size-[600px] rounded-full bg-primary/5 blur-[140px]" />
-        </div>
-
-        {/* ─── Sticky Navigation ─────────────────────────────────────── */}
-        <nav
-          className={`sticky top-0 z-40 flex items-center justify-between px-6 py-4 md:px-12 transition-all duration-300 ${
-            scrolled
-              ? "backdrop-blur-md bg-white/70 dark:bg-slate-950/70 border-b border-slate-200/50 dark:border-slate-800/50 shadow-sm"
-              : "bg-transparent"
-          }`}
-        >
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="flex size-9 items-center justify-center rounded-lg bg-primary/20 transition-transform group-hover:rotate-6 group-hover:scale-110">
-              <Scale className="size-5 text-primary" />
-            </div>
-            <span className="text-lg font-semibold tracking-tight gradient-text">
-              Nyaya Saathi
-            </span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <Link href="/auth/login">
-              <Button variant="ghost" size="sm">
-                Login
-              </Button>
-            </Link>
-            <Link href="/auth/register">
-              <Button size="sm" className="gap-1.5 group">
-                Get Started
-                <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-              </Button>
-            </Link>
-          </div>
-        </nav>
-
-        {/* ─── Hero Section ──────────────────────────────────────────── */}
-        <motion.section
-          className="relative z-10 mx-auto flex max-w-5xl flex-col items-center px-6 pt-32 pb-32 text-center md:pt-48 md:pb-48"
-          initial="hidden"
-          animate="show"
-          variants={container}
-          style={{ y: heroY, opacity: heroOpacity }}
-        >
-          <motion.h1
-            variants={fadeUp}
-            className="mb-6 max-w-4xl font-display text-5xl font-normal leading-tight tracking-tight md:text-7xl md:leading-[1.08]"
-          >
-            From Legal Confusion{" "}
-            <span className="gradient-text italic">to Clear Action</span>
-          </motion.h1>
-
-          <motion.p
-            variants={fadeUp}
-            className="mb-10 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl"
-          >
-            You know you have a legal problem but don&apos;t know what to do next.
-            Nyaya Saathi guides you through{" "}
-            <span className="text-foreground font-medium">
-              Problem → Law → Evidence → Action
-            </span>{" "}
-            - no legal jargon required.
-          </motion.p>
-
-          <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row">
-            <Link href="/auth/register">
-              <Button size="lg" className="gap-2 px-8 text-base glow-indigo group">
-                Start Your Case
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </Link>
-            <a href="#how-it-works">
-              <Button variant="outline" size="lg" className="px-8 text-base group">
-                How It Works
-                <ChevronRight className="size-4 ml-1 transition-transform group-hover:translate-x-0.5" />
-              </Button>
-            </a>
-          </motion.div>
-        </motion.section>
-
-        {/* ─── Stats Bar ─────────────────────────────────────────────── */}
-        <motion.section
-          className="relative z-10 mx-auto max-w-5xl px-6 pt-20 pb-12"
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.5 }}
-          variants={container}
-        >
-          <motion.div
-            variants={fadeUp}
-            className="glass-card grid grid-cols-2 divide-x divide-border/50 rounded-2xl md:grid-cols-4"
-          >
-            {stats.map((stat) => (
-              <div key={stat.label} className="flex flex-col items-center gap-2 py-6 px-4">
-                <stat.icon className="size-5 text-primary/60 mb-1" />
-                <span className="text-2xl font-bold font-display text-foreground">
-                  {stat.value}
-                </span>
-                <span className="text-xs text-muted-foreground font-medium tracking-wide uppercase">
-                  {stat.label}
-                </span>
-              </div>
-            ))}
-          </motion.div>
-        </motion.section>
-
-        {/* ─── Features Grid ─────────────────────────────────────────── */}
-        <motion.section
-          className="relative z-10 mx-auto max-w-6xl px-6 py-20"
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.15 }}
-          variants={container}
-        >
-          <motion.div variants={fadeUp} className="mb-14 text-center">
-            <span className="mb-4 inline-block text-xs font-semibold tracking-widest uppercase text-primary/60">
-              Features
-            </span>
-            <h2 className="mb-4 font-display text-3xl tracking-tight md:text-5xl">
-              Everything You Need
-            </h2>
-            <p className="mx-auto max-w-xl text-muted-foreground text-lg">
-              A complete AI-powered toolkit to navigate the Indian legal system
-              with confidence.
-            </p>
-          </motion.div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            {features.map((feature, i) => (
-              <motion.div
-                layoutId={`feature-card-${feature.title}`}
-                onClick={() => setSelectedFeature(feature)}
-                key={feature.title}
-                variants={fadeUp}
-                className="glass-card group relative overflow-hidden p-8 bg-[#FDFBF7] border-slate-200 dark:bg-slate-900/60 dark:border-slate-800 transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-teal-500/40 cursor-pointer"
-              >
-                {/* Expand Icon */}
-                <div className="absolute top-6 right-6 opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300">
-                  <Maximize2 className="size-5 text-teal-600 dark:text-teal-400" />
-                </div>
-                
-                {/* Gradient accent on hover */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 transition-opacity duration-500 group-hover:opacity-[0.04]`} />
-                
-                <div className="relative">
-                  <div className={`mb-5 flex size-12 items-center justify-center rounded-xl bg-gradient-to-br ${feature.gradient} text-white shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}>
-                    <feature.icon className="size-5" />
-                  </div>
-                  <h3 className="mb-2 text-xl font-semibold text-slate-900 dark:text-slate-100">{feature.title}</h3>
-                  <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-                    {feature.description}
-                  </p>
-                  <div className="mt-4 flex items-center gap-1 text-sm font-medium text-primary opacity-0 translate-x-[-8px] transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0">
-                    Learn more <ArrowRight className="size-3.5" />
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.section>
-
-        {/* ─── How It Works ──────────────────────────────────────────── */}
-        <motion.section
-          id="how-it-works"
-          className="relative z-10 mx-auto max-w-5xl px-6 py-20"
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.15 }}
-          variants={container}
-        >
-          <motion.div variants={fadeUp} className="mb-16 text-center">
-            <span className="mb-4 inline-block text-xs font-semibold tracking-widest uppercase text-primary/60">
-              Process
-            </span>
-            <h2 className="mb-4 font-display text-3xl tracking-tight md:text-5xl">
-              How It Works
-            </h2>
-            <p className="mx-auto max-w-lg text-muted-foreground text-lg">
-              Four simple steps from confusion to action.
-            </p>
-          </motion.div>
-
-          <div className="grid gap-8 md:grid-cols-4">
-            {steps.map((step, i) => (
-              <motion.div
-                key={step.num}
-                variants={scaleIn}
-                className="group relative flex flex-col items-center text-center"
-              >
-                {/* Connector line */}
-                {i < steps.length - 1 && (
-                  <div className="absolute top-8 left-[calc(50%+32px)] hidden h-[2px] w-[calc(100%-64px)] md:block">
-                    <div className="h-full w-full bg-gradient-to-r from-primary/30 to-primary/10 rounded-full" />
-                    <motion.div
-                      className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary to-primary/50 rounded-full"
-                      initial={{ width: "0%" }}
-                      whileInView={{ width: "100%" }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 1.2, delay: i * 0.3 + 0.5 }}
-                    />
-                  </div>
-                )}
-
-                <div className="relative mb-5">
-                  <div className="flex size-16 items-center justify-center rounded-2xl border-2 border-primary/20 bg-primary/10 transition-all duration-300 group-hover:border-primary/40 group-hover:bg-primary/20 group-hover:scale-110">
-                    <step.icon className="size-6 text-primary" />
-                  </div>
-                  <span className="absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-slate-900 dark:text-white shadow-lg">
-                    {step.num}
-                  </span>
-                </div>
-                <h3 className="mb-1 text-base font-semibold text-slate-900 dark:text-white">{step.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{step.subtitle}</p>
-              </motion.div>
-            ))}
-          </div>
-        </motion.section>
-
-
-        {/* ─── CTA Section ───────────────────────────────────────────── */}
-        <motion.section
-          className="relative z-10 mx-auto max-w-4xl px-6 py-20 pb-32"
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true }}
-          variants={container}
-        >
-          <motion.div
-            variants={fadeUp}
-            className="relative overflow-hidden rounded-3xl p-12 text-center md:p-20"
-          >
-            {/* Layered background */}
-            <div className="absolute inset-0 gradient-primary opacity-[0.07]" />
-            <div className="absolute inset-0 glass-card !rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md" />
-            
-            {/* Decorative circles */}
-            <div className="pointer-events-none absolute -top-20 -right-20 size-60 rounded-full bg-primary/10 blur-[80px]" />
-            <div className="pointer-events-none absolute -bottom-20 -left-20 size-60 rounded-full bg-primary/10 blur-[80px]" />
-
-            <div className="relative">
-              <h2 className="mb-5 font-display text-3xl tracking-tight md:text-5xl">
-                Ready to Take Action?
-              </h2>
-              <p className="mx-auto mb-10 max-w-lg text-muted-foreground dark:text-slate-300 text-lg">
-                Don&apos;t let legal confusion hold you back. Start your free case
-                analysis today and get a clear path forward.
-              </p>
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} className="inline-block">
-                <Link href="/auth/register">
-                  <Button size="lg" className="gap-2 px-10 py-6 text-base glow-indigo group">
-                    Create Your Free Account
-                    <ChevronRight className="size-4 transition-transform group-hover:translate-x-1" />
-                  </Button>
-                </Link>
-              </motion.div>
-              <p className="mt-4 text-xs text-muted-foreground">
-                No credit card required • Takes 30 seconds
-              </p>
-            </div>
-          </motion.div>
-        </motion.section>
-      </main>
-
-      {/* ─── Fixed Footer (Revealed by Curtain) ────────────────────── */}
-      <div 
-        ref={footerRef}
-        className="fixed bottom-0 left-0 w-full z-0 bg-[#0F172A] text-slate-300 pointer-events-none"
-      >
-        {/* We use pointer-events-none on the wrapper and auto on the footer so we don't block clicks on the main page above it */}
-        <footer className="pointer-events-auto px-6 py-12 md:py-16">
-          <div className="mx-auto max-w-6xl">
-            <div className="grid gap-8 md:grid-cols-4">
-              {/* Brand */}
-              <div className="md:col-span-1">
-                <div className="flex items-center gap-2 mb-3">
-                  <Scale className="size-5 text-indigo-400" />
-                  <span className="text-base font-semibold text-slate-100">Nyaya Saathi</span>
-                </div>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  AI-powered legal navigation for Indian citizens.
-                </p>
-              </div>
-
-              {/* Product */}
-              <div>
-                <h4 className="text-sm font-semibold mb-3 text-slate-100">Product</h4>
-                <ul className="space-y-2 text-sm text-slate-400">
-                  <li><a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a></li>
-                  <li><Link href="/auth/register" className="hover:text-white transition-colors">Get Started</Link></li>
-                  <li><Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link></li>
-                </ul>
-              </div>
-
-              {/* Legal */}
-              <div>
-                <h4 className="text-sm font-semibold mb-3 text-slate-100">Legal</h4>
-                <ul className="space-y-2 text-sm text-slate-400">
-                  <li><span className="hover:text-white transition-colors cursor-pointer">Privacy Policy</span></li>
-                  <li><span className="hover:text-white transition-colors cursor-pointer">Terms of Service</span></li>
-                  <li><span className="hover:text-white transition-colors cursor-pointer">Disclaimer</span></li>
-                </ul>
-              </div>
-
-              {/* Disclaimer */}
-              <div>
-                <h4 className="text-sm font-semibold mb-3 text-slate-100">Important</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  ⚠️ Nyaya Saathi is an AI-powered tool and is{" "}
-                  <span className="text-slate-200 font-medium">
-                    not a substitute for professional legal advice
-                  </span>
-                  . Always consult a qualified lawyer for critical legal matters.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-10 pt-6 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
-              <p className="text-xs text-slate-500">
-                © {new Date().getFullYear()} Nyaya Saathi. All rights reserved.
-              </p>
-              <div className="flex items-center gap-4 text-xs text-slate-500">
-                <span className="hover:text-white transition-colors cursor-pointer">GitHub</span>
-                <span className="hover:text-white transition-colors cursor-pointer">Twitter</span>
-                <span className="hover:text-white transition-colors cursor-pointer">Contact</span>
-              </div>
-            </div>
-          </div>
-        </footer>
       </div>
 
-      {/* ─── Feature Expansion Modal ───────────────────────────────── */}
-      <AnimatePresence>
-        {/* Background Overlay (animates independently) */}
-        {selectedFeature && (
-          <motion.div
-            key="modal-bg"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm"
-            onClick={() => setSelectedFeature(null)}
-          />
-        )}
-        
-        {/* The Card (handles layout morphing) */}
-        {selectedFeature && (
-          <motion.div
-            key="modal-card"
-            layoutId={`feature-card-${selectedFeature.title}`}
-            transition={{ type: "spring", stiffness: 200, damping: 25, bounce: 0.2 }}
-            className="fixed inset-0 z-[101] m-auto h-fit w-full max-w-2xl overflow-hidden rounded-2xl bg-[#FDFBF7] dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 sm:p-12 shadow-2xl"
-          >
-            <button
-              onClick={() => setSelectedFeature(null)}
-              className="absolute top-6 right-6 flex size-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
-            >
-              <X className="size-5" />
-            </button>
+      {/* --- Navigation --- */}
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled ? "bg-white/80 backdrop-blur-md border-b border-slate-200/50 py-3" : "bg-transparent py-6"
+        }`}
+      >
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 md:px-12">
+          
+          <div className="flex items-center gap-12">
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <div className="flex size-9 items-center justify-center rounded-full bg-[#0F172A] text-white">
+                <Scale className="size-4" />
+              </div>
+              <span className="text-xl font-bold tracking-tight text-[#0F172A]">Nyaya Saathi</span>
+            </Link>
 
-            <div className={`mb-6 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br ${selectedFeature.gradient} text-white shadow-lg`}>
-              <selectedFeature.icon className="size-8" />
+            <nav className="hidden md:flex items-center gap-8">
+              <Link href="#features" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">Features</Link>
+              <Link href="#how-it-works" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">How it Works</Link>
+              <Link href="#resources" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">Resources</Link>
+              <Link href="#connect" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">Connect</Link>
+            </nav>
+          </div>
+
+          <div className="hidden md:flex items-center gap-8">
+            <span className="text-sm font-medium text-slate-500">
+              Available for instant legal analysis
+            </span>
+            <Link href="/auth/register">
+              <Button className="rounded-full bg-[#0F172A] hover:bg-[#1E293B] text-white px-6 py-5 h-auto text-sm font-medium group transition-all">
+                Start your case
+                <div className="ml-2 bg-white text-[#0F172A] rounded-full p-1 group-hover:translate-x-1 transition-transform">
+                  <ArrowRight className="size-3" />
+                </div>
+              </Button>
+            </Link>
+          </div>
+
+          <button 
+            className="md:hidden flex items-center justify-center p-2 text-slate-900"
+            onClick={() => setMobileMenuOpen(true)}
+          >
+            <Menu className="size-6" />
+          </button>
+        </div>
+      </header>
+
+      {/* --- Mobile Menu --- */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed inset-0 z-[60] bg-white flex flex-col px-6 py-6 md:hidden"
+          >
+            <div className="flex justify-between items-center mb-12">
+              <Link href="/" className="flex items-center gap-2.5" onClick={() => setMobileMenuOpen(false)}>
+                <div className="flex size-9 items-center justify-center rounded-full bg-[#0F172A] text-white">
+                  <Scale className="size-4" />
+                </div>
+                <span className="text-xl font-bold tracking-tight text-[#0F172A]">Nyaya Saathi</span>
+              </Link>
+              <button onClick={() => setMobileMenuOpen(false)} className="p-2 text-slate-900">
+                <X className="size-6" />
+              </button>
             </div>
-            <h3 className="mb-4 text-3xl font-bold text-slate-900 dark:text-slate-100">{selectedFeature.title}</h3>
-            <p className="mb-8 text-lg leading-relaxed text-slate-600 dark:text-slate-300">
-              {selectedFeature.details}
-            </p>
             
-            <ul className="space-y-4">
-              {selectedFeature.bullets.map((bullet, i) => (
-                <li key={i} className="flex items-center gap-3 text-slate-700 dark:text-slate-200">
-                  <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-teal-500/10 text-teal-500">
-                    <ChevronRight className="size-4" />
+            <nav className="flex flex-col gap-6 text-2xl font-semibold tracking-tight">
+              <Link href="#features" onClick={() => setMobileMenuOpen(false)}>Features</Link>
+              <Link href="#how-it-works" onClick={() => setMobileMenuOpen(false)}>How it Works</Link>
+              <Link href="#resources" onClick={() => setMobileMenuOpen(false)}>Resources</Link>
+              <Link href="#connect" onClick={() => setMobileMenuOpen(false)}>Connect</Link>
+            </nav>
+
+            <div className="mt-auto flex flex-col gap-4">
+              <span className="text-sm font-medium text-slate-500">
+                Available for instant legal analysis
+              </span>
+              <Link href="/auth/register" onClick={() => setMobileMenuOpen(false)}>
+                <Button className="w-full rounded-full bg-[#0F172A] hover:bg-[#1E293B] text-white px-6 py-6 h-auto text-lg font-medium flex justify-between">
+                  Start your case
+                  <div className="bg-white text-[#0F172A] rounded-full p-1.5">
+                    <ArrowRight className="size-4" />
                   </div>
-                  <span>{bullet}</span>
-                </li>
-              ))}
-            </ul>
+                </Button>
+              </Link>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* --- Hero Section --- */}
+      <section className="relative z-10 mx-auto max-w-7xl px-6 md:px-12 pt-40 md:pt-56 pb-20 md:pb-32">
+        <div className="mb-12">
+          <span className="text-slate-600 font-medium">Nyaya Saathi Legal Engine</span>
+        </div>
+
+        <motion.h1 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem] font-medium leading-[1.05] tracking-tight text-[#0F172A] max-w-5xl mb-12"
+        >
+          We craft intelligent legal action plans for citizens ready to navigate the justice system online.
+        </motion.h1>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col sm:flex-row items-start sm:items-center gap-6"
+        >
+          <Link href="/auth/register">
+            <button className="flex items-center justify-between gap-4 rounded-full bg-[#E85D36] hover:bg-[#D44E28] text-white px-6 py-4 transition-colors font-medium text-lg w-full sm:w-auto min-w-[200px]">
+              Start a case
+              <div className="bg-white text-[#E85D36] rounded-full p-1.5">
+                <ArrowRight className="size-4" />
+              </div>
+            </button>
+          </Link>
+
+          <div className="flex items-center gap-3 bg-white/70 backdrop-blur-sm border border-slate-200 rounded-full px-4 py-3 shadow-sm">
+            <div className="flex -space-x-1">
+              <Scale className="size-5 text-[#E85D36] ml-1" />
+            </div>
+            <span className="text-sm font-semibold text-slate-900 ml-1">AI Legal Tech</span>
+            <span className="bg-[#0F172A] text-white text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-wider ml-2">
+              Featured
+            </span>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* --- Features Section --- */}
+      <section id="features" className="relative z-10 mx-auto max-w-7xl px-6 md:px-12 py-24 border-t border-slate-200/50">
+        <div className="mb-16 max-w-3xl">
+          <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-[#0F172A] mb-6">
+            Everything You Need
+          </h2>
+          <p className="text-lg text-slate-600 leading-relaxed">
+            A complete AI-powered toolkit to navigate the Indian legal system with confidence.
+          </p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {features.map((feature) => (
+            <div key={feature.title} className="bg-white/60 backdrop-blur-md border border-slate-200/60 p-8 rounded-[2rem] hover:bg-white/80 transition-colors shadow-sm">
+              <div className="flex size-12 items-center justify-center rounded-full bg-[#0F172A] text-white mb-6">
+                <feature.icon className="size-5" />
+              </div>
+              <h3 className="text-xl font-semibold text-[#0F172A] mb-3">{feature.title}</h3>
+              <p className="text-slate-600 leading-relaxed">
+                {feature.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* --- How It Works Section --- */}
+      <section id="how-it-works" className="relative z-10 mx-auto max-w-7xl px-6 md:px-12 py-24 border-t border-slate-200/50">
+         <div className="mb-16 max-w-3xl">
+          <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-[#0F172A] mb-6">
+            Process
+          </h2>
+          <p className="text-lg text-slate-600 leading-relaxed">
+            Four simple steps from confusion to action.
+          </p>
+        </div>
+
+        <div className="grid gap-8 md:grid-cols-4">
+          {steps.map((step, i) => (
+            <div key={step.num} className="relative flex flex-col">
+              <div className="mb-6 flex items-center justify-between">
+                <span className="text-4xl font-bold tracking-tighter text-[#E85D36] opacity-30">
+                  {step.num}
+                </span>
+                {i < steps.length - 1 && (
+                  <div className="hidden md:block h-[1px] w-full mx-6 bg-slate-200 flex-1" />
+                )}
+              </div>
+              <h3 className="text-xl font-semibold text-[#0F172A] mb-2">{step.title}</h3>
+              <p className="text-slate-600 leading-relaxed">{step.subtitle}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* --- Footer --- */}
+      <footer id="connect" className="relative z-10 bg-[#0A1118] text-white overflow-hidden pt-24 pb-12 rounded-t-[3rem]">
+        <div className="mx-auto max-w-7xl px-6 md:px-12 relative z-10">
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-32">
+            
+            {/* Column 1: Brand & Status */}
+            <div className="flex flex-col gap-6 md:col-span-1">
+              <div className="flex items-center gap-3">
+                <div className="flex size-10 items-center justify-center rounded-full bg-white text-[#0A1118]">
+                  <Scale className="size-5" />
+                </div>
+                <span className="text-2xl font-bold tracking-tight">Nyaya Saathi</span>
+              </div>
+              <p className="text-[#8892B0] text-sm leading-relaxed max-w-xs mt-4">
+                An AI-driven legal navigation platform empowering citizens with clear actionable insights.
+              </p>
+              
+              <div className="flex items-center gap-3 mt-4 px-4 py-2.5 rounded-full border border-white/10 bg-white/5 w-fit">
+                <div className="size-2 rounded-full bg-[#E85D36] animate-pulse" />
+                <span className="text-xs font-medium text-white/80">Available for instant legal analysis</span>
+              </div>
+            </div>
+
+            {/* Column 2: Platform */}
+            <div className="md:col-start-2">
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8892B0] mb-6">Platform</h4>
+              <ul className="flex flex-col gap-4 text-[#CCD6F6] text-sm">
+                <li><Link href="#features" className="hover:text-white transition-colors">Features</Link></li>
+                <li><Link href="#how-it-works" className="hover:text-white transition-colors">How it works</Link></li>
+                <li><Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link></li>
+                <li><Link href="#faq" className="hover:text-white transition-colors">FAQ</Link></li>
+              </ul>
+            </div>
+
+            {/* Column 3: Resources */}
+            <div>
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8892B0] mb-6">Resources</h4>
+              <ul className="flex flex-col gap-4 text-[#CCD6F6] text-sm">
+                <li><Link href="#blog" className="hover:text-white transition-colors">Legal Blog</Link></li>
+                <li><Link href="#guides" className="hover:text-white transition-colors">Action Guides</Link></li>
+                <li><Link href="#dictionary" className="hover:text-white transition-colors">Legal Dictionary</Link></li>
+                <li><Link href="#community" className="hover:text-white transition-colors">Community Forum</Link></li>
+              </ul>
+            </div>
+
+            {/* Column 4: Connect */}
+            <div>
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8892B0] mb-6">Connect</h4>
+              <ul className="flex flex-col gap-4 text-[#CCD6F6] text-sm">
+                <li><Link href="/auth/register" className="hover:text-white transition-colors flex items-center justify-between">Start a case <ArrowUpRight className="size-3 text-[#8892B0]" /></Link></li>
+                <li><Link href="#contact" className="hover:text-white transition-colors flex items-center justify-between">Contact Us <ArrowUpRight className="size-3 text-[#8892B0]" /></Link></li>
+                <li><a href="#" className="hover:text-white transition-colors flex items-center justify-between">Twitter <ArrowUpRight className="size-3 text-[#8892B0]" /></a></li>
+                <li><a href="#" className="hover:text-white transition-colors flex items-center justify-between">LinkedIn <ArrowUpRight className="size-3 text-[#8892B0]" /></a></li>
+              </ul>
+            </div>
+
+          </div>
+
+          {/* Huge Faded Text */}
+          <div className="relative border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-[#8892B0]">
+              © {new Date().getFullYear()} Nyaya Saathi. All rights reserved.
+            </p>
+            <div className="flex gap-6 text-xs text-[#8892B0]">
+              <a href="#" className="hover:text-white transition-colors">Privacy</a>
+              <a href="#" className="hover:text-white transition-colors">Terms</a>
+            </div>
+          </div>
+        </div>
+
+        {/* Giant background text (Hirael style) */}
+        {/* Adjusted bottom position to make it more visible above the footer bottom */}
+        <div className="absolute bottom-[2%] left-0 right-0 w-full overflow-hidden flex justify-center pointer-events-none select-none z-0">
+          <span 
+            className="text-[17vw] font-bold tracking-tighter text-white/[0.04] leading-none"
+            style={{ WebkitTextStroke: "1px rgba(255,255,255,0.06)" }}
+          >
+            NyayaSaathi
+          </span>
+        </div>
+      </footer>
     </div>
   );
 }

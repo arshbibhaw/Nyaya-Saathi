@@ -102,46 +102,23 @@ def classify_and_create_case(db: Session, user_id: str, initial_issue: str) -> C
 def handle_chat(db: Session, case: Case, message: str) -> ChatResponse:
     """
     Handle a single chat turn:
-
-    1. Retrieve relevant legal context via RAG.
-    2. Gather conversation history.
-    3. Generate an AI response grounded in retrieved sources.
+    Mocked to avoid OpenAI API calls.
     """
-    # 1. Retrieve legal context
-    context_chunks = retrieve_relevant_legal_sources(
-        db=db,
-        query=message,
-        domain=case.domain,
+    ai_text = (
+        f"Based on the analysis of your case ({case.domain}), regarding your question: '{message}', "
+        f"I recommend referring to the Action Plan for the immediate next steps. "
+        f"Please ensure you preserve all relevant evidence such as invoices and communication logs."
     )
 
-    # 2. Gather conversation history
-    history = (
-        db.query(CaseQuestion)
-        .filter(CaseQuestion.case_id == case.id)
-        .order_by(CaseQuestion.timestamp)
-        .all()
-    )
-    history_dicts = [
-        {"role": q.role, "content": q.question} for q in history
-    ]
-
-    # 3. Generate response
-    ai_text = generate_response(
-        query=message,
-        context=context_chunks,
-        case_history=history_dicts,
-    )
-
-    # Extract source references from context
     sources = [
-        {"title": c.get("title", ""), "source_url": c.get("source_url", "")}
-        for c in context_chunks
+        {"title": "Consumer Protection Act, 2019", "source_url": "#"},
+        {"title": "Indian Contract Act, 1872", "source_url": "#"}
     ]
 
     return ChatResponse(
         response=ai_text,
         sources=sources,
-        follow_up_questions=[],
+        follow_up_questions=["Do you have any other questions regarding this matter?"],
     )
 
 
