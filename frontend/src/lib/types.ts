@@ -24,7 +24,7 @@ export interface Case {
   issue: string;
   status: CaseStatus | string;
   summary?: string;
-  timeline?: { event: string; time: string; [key: string]: any }[];
+  timeline?: { event: string; time: string; [key: string]: unknown }[];
   created_at: string;
 }
 
