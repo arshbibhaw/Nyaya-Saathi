@@ -47,7 +47,6 @@ export function FileUpload({ caseId, onUploadSuccess }: FileUploadProps) {
       "image/jpeg": [".jpg", ".jpeg"],
       "image/webp": [".webp"],
     },
-    maxFiles: 1,
     maxSize: 10 * 1024 * 1024, // 10MB
   });
 
