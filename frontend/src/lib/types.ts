@@ -19,10 +19,12 @@ export interface UserOut {
 
 export interface Case {
   id: string;
+  title?: string;
   domain: string;
   issue: string;
-  status: CaseStatus;
+  status: CaseStatus | string;
   summary?: string;
+  timeline?: { event: string; time: string; [key: string]: any }[];
   created_at: string;
 }
 

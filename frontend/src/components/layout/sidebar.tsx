@@ -26,6 +26,8 @@ import { useAuthStore } from "@/store/auth-store";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ProfileSheet } from "@/components/layout/profile-sheet";
 
+import Image from "next/image";
+
 export function Sidebar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -65,163 +67,81 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-sidebar-border bg-sidebar transition-transform duration-300 md:relative md:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-[#19201D] text-white transition-transform duration-300 md:relative md:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center gap-3 px-6">
-          <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Scale className="size-4" />
-          </div>
-          <div>
-            <h1 className="text-sm font-bold tracking-tight text-sidebar-foreground">
-              NYAYA SAATHI
-            </h1>
-            <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Legal Navigator</p>
+        <div className="flex h-20 items-center justify-center gap-3 px-6 mt-4">
+          <div className="flex items-center gap-3">
+            <div className="relative flex size-10 shrink-0 items-center justify-center rounded-lg overflow-hidden border border-white/10 shadow-md">
+              <Image 
+                src="/logo-mark.png" 
+                alt="Nyaya Saathi Logo" 
+                fill 
+                className="object-cover"
+                sizes="40px"
+              />
+            </div>
+            <div className="flex flex-col">
+              <h1 className="text-xl font-serif tracking-widest text-white leading-tight">
+                NYAYA<br/>SAATHI
+              </h1>
+            </div>
           </div>
         </div>
 
-        <Separator className="opacity-50" />
+        <Separator className="opacity-20 mt-4 mx-6 w-auto" />
 
         {/* Navigation */}
-        <div className="flex-1 overflow-y-auto">
-          <nav className="flex flex-col gap-6 px-4 py-6">
+        <div className="flex-1 overflow-y-auto mt-6">
+          <nav className="flex flex-col gap-2 px-4">
             
-            {/* Overview */}
-            <div>
-              <Link
-                href="/dashboard"
-                onClick={() => setMobileOpen(false)}
-                className={cn(
-                  "group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    pathname === "/dashboard"
-                      ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100"
-                      : "text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-foreground",
-                )}
-              >
-                <LayoutDashboard
+            {[
+              { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+              { href: "/queries", label: "My Queries", icon: HelpCircle },
+              { href: "/cases", label: "My Cases", icon: FolderOpen },
+              { href: "/documents", label: "Documents", icon: FileText },
+              { href: "/resources", label: "Resources", icon: BookOpen },
+            ].map((item) => {
+              const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
                   className={cn(
-                    "size-4",
-                    pathname === "/dashboard" ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                    "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-[#28352F] text-white border border-[#3E5248]"
+                      : "text-slate-400 hover:bg-[#28352F]/50 hover:text-white",
                   )}
-                />
-                Overview
-              </Link>
-            </div>
-
-            {/* CASES */}
-            <div className="space-y-1">
-              <h2 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Cases
-              </h2>
-              {[
-                { href: "/cases", label: "All Cases", icon: FolderOpen },
-                { href: "/cases?status=active", label: "Active", icon: AlertCircle },
-                { href: "/cases?status=completed", label: "Completed", icon: CheckCircle2 },
-              ].map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileOpen(false)}
+                >
+                  <item.icon
                     className={cn(
-                      "group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                      isActive
-                        ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100"
-                        : "text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-foreground",
+                      "size-5",
+                      isActive ? "text-[#C49B63]" : "text-slate-400 group-hover:text-[#C49B63]"
                     )}
-                  >
-                    <item.icon
-                      className={cn(
-                        "size-4",
-                        isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-                      )}
-                    />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
-
-            {/* ASSISTANCE */}
-            <div className="space-y-1">
-              <h2 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Assistance
-              </h2>
-              {[
-                { href: "/action-plans", label: "Action Plans", icon: ClipboardList },
-                { href: "/documents", label: "Documents", icon: FileText },
-                { href: "/resources", label: "Legal Resources", icon: BookOpen },
-              ].map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={cn(
-                      "group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                      isActive
-                        ? "bg-slate-100 text-slate-900"
-                        : "text-muted-foreground hover:bg-slate-50 hover:text-foreground",
-                    )}
-                  >
-                    <item.icon
-                      className={cn(
-                        "size-4",
-                        isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-                      )}
-                    />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
-
+                  />
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
         </div>
 
-        <Separator className="opacity-50" />
+        <Separator className="opacity-20 mx-6 w-auto" />
 
-        {/* User / Help Footer */}
-        <div className="p-4 space-y-1">
-          <Link
-            href="/help"
-            className="group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-foreground transition-colors"
+        {/* User Footer */}
+        <div className="p-4 mb-4">
+          <button
+            onClick={() => setIsProfileOpen(true)}
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 min-w-0 hover:bg-[#28352F]/50 transition-colors text-left text-slate-400 hover:text-white group"
+            aria-label="Open Profile"
           >
-            <HelpCircle className="size-4 text-muted-foreground group-hover:text-foreground" />
-            Help
-          </Link>
-          <div className="mt-4 flex items-center gap-2 px-3 py-2">
-            <button
-              onClick={() => setIsProfileOpen(true)}
-              className="flex flex-1 items-center gap-2 min-w-0 hover:opacity-80 transition-opacity text-left"
-              aria-label="Open Profile"
-            >
-              <Avatar className="size-8 border border-border shrink-0">
-                <AvatarFallback className="bg-slate-100 text-xs font-medium text-slate-900">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">
-                  {user?.full_name ?? "User"}
-                </p>
-              </div>
-            </button>
-            <ThemeToggle />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={logout}
-              aria-label="Logout"
-              className="size-8 text-muted-foreground hover:text-destructive"
-            >
-              <LogOut className="size-4" />
-            </Button>
-          </div>
+            <User className="size-5 group-hover:text-[#C49B63]" />
+            <span className="text-sm font-medium">Profile</span>
+          </button>
         </div>
       </aside>
 

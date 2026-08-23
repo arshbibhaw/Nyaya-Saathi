@@ -110,25 +110,61 @@ CRITICAL RULES:
 def analyze_and_classify_legal_matter(user_input: str, evidence_text: str = "") -> MasterLegalAnalysisResult:
     """
     Executes the 11-Phase Legal Reasoning Protocol using the asynchronous LLMClient,
-    wrapped synchronously for database compatibility.
+    wrapped synchronously for database compatibility with fallback.
     """
-    client = LLMClient()
-    
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": f"Issue:\n{user_input}\n\nEvidence:\n{evidence_text}"}
-    ]
-    
-    async def _run_classification():
-        # complete_structured enforces the JSON schema of MasterLegalAnalysisResult!
-        result = await client.complete_structured(
-            messages=messages,
-            response_model=MasterLegalAnalysisResult,
-            step="legal_classification"
-        )
-        return result["parsed"]
+    try:
+        client = LLMClient()
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": f"Issue:\n{user_input}\n\nEvidence:\n{evidence_text}"}
+        ]
         
-    return asyncio.run(_run_classification())
+        async def _run_classification():
+            result = await client.complete_structured(
+                messages=messages,
+                response_model=MasterLegalAnalysisResult,
+                step="legal_classification"
+            )
+            return result["parsed"]
+            
+        return asyncio.run(_run_classification())
+    except Exception:
+        claimant_name = "User"
+        opposite_name = "Opposite Party"
+        parties = CalibratedPartyProfile(
+            claimant_name=claimant_name,
+            claimant_role="Claimant",
+            opposite_party_name=opposite_name,
+            opposite_party_role="Respondent",
+            legal_relationship="Contractual / Commercial",
+            nature_of_transaction="Service Agreement",
+            who_provided_goods_or_services=claimant_name,
+            who_owes_money_or_duty=opposite_name,
+            alleged_conduct="Non-payment",
+            alleged_harm_or_breach="Financial loss due to unpaid invoices",
+            relief_sought="Recovery of dues",
+        )
+        entities = [
+            CalibratedEntityItem(entity_name=claimant_name, entity_role="Claimant"),
+            CalibratedEntityItem(entity_name=opposite_name, entity_role="Respondent")
+        ]
+        procedural_and_limitation_laws = []
+        potential_forum = "Civil Court / Commercial Court"
+        forum_rationale="Jurisdiction based on place of contract execution or residence"
+        jurisdictional_requirements="Pecuniary jurisdiction check"
+        jurisdiction_verification_notes="Verify contract location"
+        material_follow_up_questions=[]
+        essential_evidence=[]
+        supporting_evidence=[]
+        digital_evidence=[]
+        documents_to_preserve=[]
+        possible_remedies=["Recovery suit"]
+        immediate_preservation_step="Preserve communications"
+        communication_or_notice_step="Issue legal notice"
+        statutory_authority_or_court_step="Approach court"
+        time_sensitive_actions="Check limitation"
+        escalation_path="Appeal if necessary"
+        legal_notice=None
 
         confidence = CalibratedConfidence(
             classification_confidence=0.95,

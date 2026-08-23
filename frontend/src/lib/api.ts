@@ -1,5 +1,6 @@
 import type {
   AuthResponse,
+  UserOut,
   Case,
   ChatResponse,
   EvidenceResponse,

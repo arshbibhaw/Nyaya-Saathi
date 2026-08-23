@@ -24,11 +24,7 @@ from PIL import Image
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
-<<<<<<< HEAD
-=======
-
 import os
->>>>>>> origin/main
 
 # Configure tesseract binary path from env
 pytesseract.pytesseract.tesseract_cmd = os.getenv("TESSERACT_CMD", r"C:\Program Files\Tesseract-OCR\tesseract.exe")

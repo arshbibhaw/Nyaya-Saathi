@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, Scale, Menu, X, ArrowUpRight, Compass, FileSearch, ClipboardList, Zap } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 
@@ -74,10 +75,18 @@ export default function LandingPage() {
           
           <div className="flex items-center gap-12">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="flex size-9 items-center justify-center rounded-full bg-[#0F172A] text-white">
-                <Scale className="size-4" />
+              <div className="relative flex size-10 shrink-0 items-center justify-center rounded-lg overflow-hidden border border-slate-200/80 shadow-sm">
+                <Image 
+                  src="/logo-mark.png" 
+                  alt="Nyaya Saathi Logo" 
+                  fill 
+                  className="object-cover"
+                  sizes="40px"
+                />
               </div>
-              <span className="text-xl font-bold tracking-tight text-[#0F172A]">Nyaya Saathi</span>
+              <span className="text-xl font-serif tracking-widest text-[#19201D]">
+                NYAYA SAATHI
+              </span>
             </Link>
 
             <nav className="hidden md:flex items-center gap-8">
@@ -122,10 +131,18 @@ export default function LandingPage() {
           >
             <div className="flex justify-between items-center mb-12">
               <Link href="/" className="flex items-center gap-2.5" onClick={() => setMobileMenuOpen(false)}>
-                <div className="flex size-9 items-center justify-center rounded-full bg-[#0F172A] text-white">
-                  <Scale className="size-4" />
+                <div className="relative flex size-10 shrink-0 items-center justify-center rounded-lg overflow-hidden border border-slate-200/80 shadow-sm">
+                  <Image 
+                    src="/logo-mark.png" 
+                    alt="Nyaya Saathi Logo" 
+                    fill 
+                    className="object-cover"
+                    sizes="40px"
+                  />
                 </div>
-                <span className="text-xl font-bold tracking-tight text-[#0F172A]">Nyaya Saathi</span>
+                <span className="text-xl font-serif tracking-widest text-[#19201D]">
+                  NYAYA SAATHI
+                </span>
               </Link>
               <button onClick={() => setMobileMenuOpen(false)} className="p-2 text-slate-900">
                 <X className="size-6" />
@@ -158,18 +175,24 @@ export default function LandingPage() {
 
       {/* --- Hero Section --- */}
       <section className="relative z-10 mx-auto max-w-7xl px-6 md:px-12 pt-40 md:pt-56 pb-20 md:pb-32">
-        <div className="mb-12">
-          <span className="text-slate-600 font-medium">Nyaya Saathi Legal Engine</span>
-        </div>
-
         <motion.h1 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem] font-medium leading-[1.05] tracking-tight text-[#0F172A] max-w-5xl mb-12"
+          className="text-5xl sm:text-6xl md:text-7xl lg:text-[5rem] font-bold leading-[1.1] tracking-tight text-[#3A332C] max-w-4xl mb-6 font-serif"
         >
-          We craft intelligent legal action plans for citizens ready to navigate the justice system online.
+          Understand.<br/>
+          Decide. Move Forward.
         </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="text-xl text-[#3A332C]/80 mb-12 max-w-xl font-medium"
+        >
+          Trusted legal guidance<br/>for every citizen.
+        </motion.p>
 
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -178,8 +201,8 @@ export default function LandingPage() {
           className="flex flex-col sm:flex-row items-start sm:items-center gap-6"
         >
           <Link href="/auth/register">
-            <button className="flex items-center justify-between gap-4 rounded-full bg-[#E85D36] hover:bg-[#D44E28] text-white px-6 py-4 transition-colors font-medium text-lg w-full sm:w-auto min-w-[200px]">
-              Start a case
+            <button className="flex items-center justify-between gap-4 rounded-xl bg-[#C49B63] hover:bg-[#A78B5D] text-white px-8 py-4 transition-colors font-medium text-lg w-full sm:w-auto shadow-md">
+              Explore Your Options
               <div className="bg-white text-[#E85D36] rounded-full p-1.5">
                 <ArrowRight className="size-4" />
               </div>
