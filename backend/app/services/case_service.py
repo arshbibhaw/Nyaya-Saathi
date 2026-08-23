@@ -17,7 +17,7 @@ from app.ai.rag.generator import generate_response, generate_response_stream
 logger = logging.getLogger(__name__)
 
 
-def classify_and_create_case(db: Session, user_id: str, initial_issue: str) -> Case:
+def classify_and_create_case(db: Session, user_id: str, initial_issue: str, location: str | None = None) -> Case:
     """
     Create a new case using the 11-Phase Legal Reasoning Engine.
 
@@ -33,9 +33,14 @@ def classify_and_create_case(db: Session, user_id: str, initial_issue: str) -> C
     # 2. Persist Case
     case = Case(
         user_id=user_id,
+        title=analysis.primary_domain_display,
+        description=analysis.short_legal_reasoning,
         domain=analysis.primary_domain,
         issue=analysis.primary_legal_issue,
-        status="new",
+        subcategory=analysis.subcategory_display,
+        urgency=analysis.urgency,
+        location=location,
+        status="ACTIVE",
         summary=initial_issue,
     )
     db.add(case)

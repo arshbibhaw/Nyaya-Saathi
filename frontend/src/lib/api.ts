@@ -96,15 +96,27 @@ export async function fetchCases(): Promise<Case[]> {
   return apiClient<Case[]>("/cases/");
 }
 
-export async function createCase(initial_issue: string): Promise<Case> {
+export async function createCase(initial_issue: string, location?: string): Promise<Case> {
   return apiClient<Case>("/cases/", {
     method: "POST",
-    body: JSON.stringify({ initial_issue }),
+    body: JSON.stringify({ initial_issue, location }),
   });
 }
 
 export async function getCase(caseId: string): Promise<Case> {
   return apiClient<Case>(`/cases/${caseId}`);
+}
+
+// ── Messages ────────────────────────────────────────────────────────────────
+
+export async function fetchMessages(caseId: string): Promise<{id: string; role: string; content: string; timestamp: string}[]> {
+  return apiClient(`/cases/${caseId}/messages`);
+}
+
+// ── Evidence List ───────────────────────────────────────────────────────────
+
+export async function fetchEvidence(caseId: string): Promise<EvidenceResponse[]> {
+  return apiClient<EvidenceResponse[]>(`/cases/${caseId}/evidence`);
 }
 
 // ── Chat ────────────────────────────────────────────────────────────────────

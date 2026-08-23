@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -24,6 +25,9 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Type
 
 from pydantic import BaseModel
+import openai
+from google import genai
+from google.genai import types as genai_types
 
 from app.ai.config import (
     FALLBACK_LLM_MODEL,
@@ -38,6 +42,7 @@ from app.ai.config import (
     COST_ALERT_DAILY_USD,
     PROMPT_VERSIONS,
 )
+from app.core.config import settings
 
 logger = logging.getLogger("nyaya_saathi.ai.llm")
 
@@ -51,6 +56,7 @@ _COST_PER_1K: Dict[str, Dict[str, float]] = {
     "gpt-4o-mini":   {"input": 0.00015, "output": 0.0006},
     "gpt-4-turbo":   {"input": 0.01,    "output": 0.03},
     "gpt-3.5-turbo": {"input": 0.0005,  "output": 0.0015},
+    "gemini-1.5-flash": {"input": 0.000075, "output": 0.0003},
 }
 
 
@@ -161,25 +167,6 @@ _cost_tracker = _DailyCostTracker()
 class LLMClient:
     """
     Abstracted LLM client for Nyaya Saathi.
-
-    Usage::
-
-        client = LLMClient()
-
-        # Simple completion
-        result = await client.complete(
-            messages=[{"role": "user", "content": "Hello"}],
-            step="classify",
-            case_id="case-123",
-        )
-
-        # Structured output (returns parsed Pydantic model)
-        result = await client.complete_structured(
-            messages=[...],
-            response_model=ClassificationResult,
-            step="classify",
-            case_id="case-123",
-        )
     """
 
     def __init__(
@@ -210,25 +197,14 @@ class LLMClient:
             return self._client
 
         if self.provider == "openai":
-            try:
-                from openai import AsyncOpenAI
-                from app.core.config import settings
-                # We fetch the key directly from the environment or settings to be explicit
-                api_key = settings.LLM_API_KEY or __import__('os').getenv("OPENAI_API_KEY")
-                self._client = AsyncOpenAI(api_key=api_key)
-            except ImportError:
-                raise ImportError(
-                    "openai package is required. Install with: pip install openai"
-                )
+            if not settings.OPENAI_API_KEY:
+                raise ValueError("OPENAI_API_KEY must be set for openai provider")
+            self._client = openai.AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
         elif self.provider == "google":
-            try:
-                import google.generativeai as genai
-                self._client = genai
-            except ImportError:
-                raise ImportError(
-                    "google-generativeai package is required. "
-                    "Install with: pip install google-generativeai"
-                )
+            api_key = os.getenv("GEMINI_API_KEY") or getattr(settings, "LLM_API_KEY", None)
+            if not api_key:
+                raise ValueError("GEMINI_API_KEY or LLM_API_KEY must be set for google provider")
+            self._client = genai.Client(api_key=api_key)
         elif self.provider == "anthropic":
             try:
                 from anthropic import AsyncAnthropic
@@ -293,6 +269,68 @@ class LLMClient:
             "finish_reason": choice.finish_reason,
         }
 
+    async def _call_google(
+        self,
+        model: str,
+        messages: List[Dict[str, str]],
+        response_format: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Call Google GenAI SDK."""
+        client = self._get_client()
+
+        # Convert messages to Google format
+        contents = []
+        system_instruction = None
+        for msg in messages:
+            if msg["role"] == "system":
+                system_instruction = msg["content"]
+            else:
+                contents.append(
+                    genai_types.Content(
+                        role="user" if msg["role"] == "user" else "model",
+                        parts=[genai_types.Part.from_text(text=msg["content"])],
+                    )
+                )
+
+        config_args = {
+            "temperature": self.temperature,
+            "max_output_tokens": self.max_output_tokens,
+            "top_p": TOP_P,
+        }
+        
+        if system_instruction:
+            config_args["system_instruction"] = system_instruction
+            
+        if response_format:
+            config_args["response_mime_type"] = "application/json"
+            if "schema" in response_format:
+                config_args["response_schema"] = response_format["schema"]
+
+        config = genai_types.GenerateContentConfig(**config_args)
+
+        # Run the synchronous generate_content in a thread pool
+        def _run():
+            return client.models.generate_content(
+                model=model,
+                contents=contents,
+                config=config,
+            )
+            
+        response = await asyncio.to_thread(_run)
+
+        # Approximate token count since we don't always get usage back
+        usage = response.usage_metadata
+        input_tokens = usage.prompt_token_count if usage else 0
+        output_tokens = usage.candidates_token_count if usage else 0
+
+        return {
+            "content": response.text,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "total_tokens": input_tokens + output_tokens,
+            "finish_reason": response.candidates[0].finish_reason if response.candidates else "unknown",
+        }
+
     async def _call_provider(
         self,
         model: str,
@@ -302,7 +340,9 @@ class LLMClient:
         """Dispatch to the configured provider."""
         if self.provider == "openai":
             return await self._call_openai(model, messages, response_format)
-        # Future: add google, anthropic implementations
+        elif self.provider == "google":
+            return await self._call_google(model, messages, response_format)
+        # Future: add anthropic implementation
         raise NotImplementedError(f"Provider {self.provider} not yet implemented")
 
     # ----- Public API: complete ---------------------------------------------
@@ -492,7 +532,10 @@ class LLMClient:
         Returns dict with keys: parsed, raw_content, call_log
         Raises RuntimeError if LLM unavailable or JSON parsing fails after retry.
         """
-        response_format = {"type": "json_object"}
+        response_format = {
+            "type": "json_object",
+            "schema": response_model
+        }
 
         result = await self.complete(
             messages=messages,

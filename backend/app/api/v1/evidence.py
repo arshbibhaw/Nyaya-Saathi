@@ -117,3 +117,35 @@ async def upload_evidence(
         extracted_entities=extracted_entities,
         created_at=evidence.created_at,
     )
+
+@router.get(
+    "/cases/{case_id}/evidence",
+    response_model=list[EvidenceResponse],
+    status_code=status.HTTP_200_OK,
+)
+def get_evidence(
+    case_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Get all evidence for a case."""
+    case = db.query(Case).filter(Case.id == case_id, Case.user_id == user.id).first()
+    if not case:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
+
+    evidence_list = db.query(Evidence).filter(Evidence.case_id == case_id).order_by(Evidence.created_at.desc()).all()
+    
+    formatted_evidence = []
+    for ev in evidence_list:
+        formatted_evidence.append(
+            EvidenceResponse(
+                id=ev.id,
+                file_name=ev.file_name,
+                mime_type=ev.mime_type,
+                extracted_text=ev.extracted_text,
+                extracted_entities=ExtractedEntities(**ev.metadata_json) if ev.metadata_json else ExtractedEntities(dates=[], amounts=[], parties=[], key_statements=[]),
+                created_at=ev.created_at,
+            )
+        )
+        
+    return formatted_evidence

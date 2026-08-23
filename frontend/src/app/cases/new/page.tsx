@@ -34,7 +34,7 @@ export default function NewCasePage() {
     if (!formData.issue.trim()) return;
 
     try {
-      const newCase = await createCase(formData.issue);
+      const newCase = await createCase(formData.issue, formData.state || undefined);
       router.push(`/cases/${newCase.id}`);
     } catch {
       // Error handled by store

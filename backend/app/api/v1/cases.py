@@ -10,7 +10,7 @@ from app.api.dependencies import get_db, get_current_user
 from app.models.user import User
 from app.models.case import Case
 from app.models.case_question import CaseQuestion
-from app.schemas.case import CaseCreate, CaseResponse, ChatMessage, ChatResponse
+from app.schemas.case import CaseCreate, CaseResponse, ChatMessage, ChatResponse, MessageResponse
 from app.services.case_service import classify_and_create_case, handle_chat_stream
 
 router = APIRouter(prefix="/cases", tags=["Cases"])
@@ -23,7 +23,7 @@ def create_case(
     user: User = Depends(get_current_user),
 ):
     """Create a new case from a natural-language issue description."""
-    case = classify_and_create_case(db, user.id, payload.initial_issue)
+    case = classify_and_create_case(db, user.id, payload.initial_issue, payload.location)
     return case
 
 
@@ -74,3 +74,27 @@ def chat(
         handle_chat_stream(db, case, payload.message), 
         media_type="text/event-stream"
     )
+
+@router.get("/{case_id}/messages", response_model=list[MessageResponse])
+def get_messages(
+    case_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Get chat history for a case."""
+    case = db.query(Case).filter(Case.id == case_id, Case.user_id == user.id).first()
+    if not case:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
+
+    messages = db.query(CaseQuestion).filter(CaseQuestion.case_id == case_id).order_by(CaseQuestion.created_at.asc()).all()
+    
+    formatted_messages = []
+    for msg in messages:
+        formatted_messages.append({
+            "id": msg.id,
+            "role": msg.role,
+            "content": msg.question or msg.answer or "",
+            "timestamp": msg.created_at
+        })
+        
+    return formatted_messages

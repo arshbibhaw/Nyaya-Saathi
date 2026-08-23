@@ -18,20 +18,17 @@ export interface UserOut {
 
 export interface Case {
   id: string;
+  title?: string;
+  description?: string;
   domain: string;
   issue: string;
-  status: CaseStatus;
+  subcategory?: string;
+  urgency?: string;
+  status: string;
   summary?: string;
+  location?: string;
   created_at: string;
 }
-
-export type CaseStatus =
-  | "open"
-  | "pending_evidence"
-  | "analyzing"
-  | "plan_generated"
-  | "resolved"
-  | "escalated";
 
 // ── Evidence ────────────────────────────────────────────────────────────────
 
@@ -42,10 +39,12 @@ export interface ExtractedEntities {
 }
 
 export interface EvidenceResponse {
-  evidence_id: string;
+  id: string;
   file_name: string;
   mime_type: string;
+  extracted_text?: string;
   extracted_entities: ExtractedEntities;
+  created_at: string;
 }
 
 // ── Chat ────────────────────────────────────────────────────────────────────
@@ -77,12 +76,13 @@ export interface ActionPlanStep {
   step: number;
   title: string;
   description: string;
-  status?: "pending" | "in_progress" | "done";
+  status?: string;
 }
 
 export interface ActionPlan {
+  id: string;
   case_id: string;
-  plan_status: "generating" | "generated" | "failed";
+  status: string;
   steps: ActionPlanStep[];
 }
 
@@ -91,7 +91,7 @@ export interface ActionPlan {
 export interface GeneratedDocument {
   id: string;
   case_id: string;
-  doc_type: "complaint" | "notice" | "letter";
+  doc_type: "complaint" | "notice" | "letter" | "legal_notice";
   content: string;
   generated_at: string;
 }

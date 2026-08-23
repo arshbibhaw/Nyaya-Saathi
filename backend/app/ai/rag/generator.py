@@ -1,11 +1,18 @@
 """
-RAG response generator stub.
+RAG response generator — uses LLMClient to produce grounded legal responses.
 
 Takes the user query, retrieved legal context, and conversation history,
 then calls the LLM to produce a grounded response.
 """
 
+import asyncio
+import concurrent.futures
+import logging
+
+from app.ai.llm.client import LLMClient
 from app.ai.prompts.templates import GENERATOR_PROMPT
+
+logger = logging.getLogger(__name__)
 
 
 def generate_response(
@@ -29,35 +36,60 @@ def generate_response(
     -------
     str
         The AI's response text.
-
-    .. note::
-        **STUB** — returns a placeholder response.  Replace with an
-        actual LLM call.  Use ``GENERATOR_PROMPT`` as the system
-        message and inject *context* into the prompt.
     """
-    import asyncio
-    from app.ai.llm.client import LLMClient
-    
     client = LLMClient()
-    
+
     context_str = "\n\n".join(
-        f"[Source: {c.get('title', 'Unknown')}]\n{c.get('chunk_text', '')}" 
+        f"[Source: {c.get('title', 'Unknown')}]\n{c.get('chunk_text', '')}"
         for c in context
-    )
-    
+    ) if context else "No specific legal sources available. Respond based on general Indian legal knowledge."
+
     messages = [
         {"role": "system", "content": GENERATOR_PROMPT.format(context=context_str)},
     ]
-    
-    messages.extend(case_history)
+
+    # Add conversation history
+    messages.extend(case_history[-10:])  # Keep last 10 messages for context window
     messages.append({"role": "user", "content": query})
-    
+
+    async def _generate():
+        result = await client.complete(messages=messages, step="chat_response")
+        return result["content"]
+
+    # Handle being called from within an existing event loop (uvicorn)
     try:
-        response = client.chat.completions.create(
-            model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
-            messages=messages,
-            temperature=0.3,
-        )
-        return response.choices[0].message.content
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop and loop.is_running():
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            future = pool.submit(asyncio.run, _generate())
+            return future.result(timeout=120)
+    else:
+        return asyncio.run(_generate())
+
+
+def generate_response_stream(
+    query: str,
+    context: list[dict],
+    case_history: list[dict],
+):
+    """
+    Generate an AI response and yield it in chunks for SSE streaming.
+
+    Since the Google GenAI SDK doesn't easily support token-level streaming
+    in the same way as OpenAI, we generate the full response and yield it
+    in word-level chunks to simulate streaming.
+    """
+    try:
+        full_response = generate_response(query, context, case_history)
+
+        # Yield in word-level chunks to simulate streaming
+        words = full_response.split(" ")
+        for i, word in enumerate(words):
+            chunk = word if i == 0 else " " + word
+            yield chunk
     except Exception as e:
-        return f"I encountered an error while trying to process your request: {e}"
+        logger.error("Chat generation failed: %s", e)
+        yield f"I apologize, but I encountered an error processing your request. Please try again."

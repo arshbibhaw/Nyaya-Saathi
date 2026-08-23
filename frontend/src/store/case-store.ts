@@ -9,7 +9,7 @@ interface CaseState {
   error: string | null;
 
   fetchCases: () => Promise<void>;
-  createCase: (issue: string) => Promise<Case>;
+  createCase: (issue: string, location?: string) => Promise<Case>;
   setActiveCase: (c: Case | null) => void;
   loadCase: (caseId: string) => Promise<void>;
 }
@@ -33,10 +33,10 @@ export const useCaseStore = create<CaseState>()((set, get) => ({
     }
   },
 
-  createCase: async (issue: string) => {
+  createCase: async (issue: string, location?: string) => {
     set({ isLoading: true, error: null });
     try {
-      const newCase = await apiCreateCase(issue);
+      const newCase = await apiCreateCase(issue, location);
       set((state) => ({
         cases: [newCase, ...state.cases],
         activeCase: newCase,
