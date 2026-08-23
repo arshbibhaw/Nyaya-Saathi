@@ -212,7 +212,10 @@ class LLMClient:
         if self.provider == "openai":
             try:
                 from openai import AsyncOpenAI
-                self._client = AsyncOpenAI()
+                from app.core.config import settings
+                # We fetch the key directly from the environment or settings to be explicit
+                api_key = settings.LLM_API_KEY or __import__('os').getenv("OPENAI_API_KEY")
+                self._client = AsyncOpenAI(api_key=api_key)
             except ImportError:
                 raise ImportError(
                     "openai package is required. Install with: pip install openai"
