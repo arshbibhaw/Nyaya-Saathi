@@ -20,15 +20,14 @@ class Settings(BaseSettings):
     # --- Database ---
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./nyayasaathi.db")
 
-
     # --- Security ---
     JWT_SECRET: str = os.getenv("JWT_SECRET", "change-me-in-production")
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRATION_MINUTES: int = 60 * 24  # 24 hours
 
-    # --- AI / LLM ---
+    # --- AI / LLM (unified key) ---
     LLM_API_KEY: str = os.getenv("LLM_API_KEY", "")
-    EMBEDDING_API_KEY: str = os.getenv("EMBEDDING_API_KEY", "")
+    OPENAI_API_KEY: str = os.getenv("LLM_API_KEY", "")  # alias for embedder compat
     LLM_MODEL: str = os.getenv("LLM_MODEL", "gpt-4o")
     EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
     EMBEDDING_DIMENSIONS: int = 1536

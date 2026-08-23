@@ -8,6 +8,12 @@ class ActionPlanStep(BaseModel):
     step: int
     title: str
     description: str
+    status: str = "PENDING"  # PENDING | IN_PROGRESS | COMPLETED
+
+
+class ActionPlanStepUpdate(BaseModel):
+    """Payload for PATCH /cases/:id/action-plan/steps/:stepIndex."""
+    status: str  # PENDING | IN_PROGRESS | COMPLETED
 
 
 class ActionPlanResponse(BaseModel):
