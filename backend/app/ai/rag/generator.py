@@ -36,14 +36,9 @@ def generate_response(
         message and inject *context* into the prompt.
     """
     import asyncio
-    import os
-    from openai import OpenAI
+    from app.ai.llm.client import LLMClient
     
-    api_key = os.getenv("LLM_API_KEY", "")
-    if not api_key:
-        return "I'm sorry, I am not able to generate a response at this time."
-
-    client = OpenAI(api_key=api_key)
+    client = LLMClient()
     
     context_str = "\n\n".join(
         f"[Source: {c.get('title', 'Unknown')}]\n{c.get('chunk_text', '')}" 
@@ -67,43 +62,18 @@ def generate_response(
     except Exception as e:
         return f"I encountered an error while trying to process your request: {e}"
 
+
 def generate_response_stream(
     query: str,
     context: list[dict],
     case_history: list[dict],
 ):
-    """Generate an AI response stream grounded in retrieved context."""
-    import os
-    from openai import OpenAI
-    
-    api_key = os.getenv("LLM_API_KEY", "")
-    if not api_key:
-        yield "I'm sorry, I am not able to generate a response at this time."
-        return
-
-    client = OpenAI(api_key=api_key)
-    
-    context_str = "\n\n".join(
-        f"[Source: {c.get('title', 'Unknown')}]\n{c.get('chunk_text', '')}" 
-        for c in context
-    )
-    
-    messages = [
-        {"role": "system", "content": GENERATOR_PROMPT.format(context=context_str)},
-    ]
-    messages.extend(case_history)
-    messages.append({"role": "user", "content": query})
-    
-    try:
-        response = client.chat.completions.create(
-            model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
-            messages=messages,
-            temperature=0.3,
-            stream=True,
-        )
-        for chunk in response:
-            if chunk.choices[0].delta.content is not None:
-                yield chunk.choices[0].delta.content
-    except Exception as e:
-        yield f"\n[Error: {e}]"
+    """
+    Stream AI response chunks grounded in legal context.
+    """
+    response_text = generate_response(query, context, case_history)
+    # Stream in small words/tokens for SSE
+    words = response_text.split(" ")
+    for i, word in enumerate(words):
+        yield word + (" " if i < len(words) - 1 else "")
 

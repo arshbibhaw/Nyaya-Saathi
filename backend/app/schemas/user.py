@@ -8,7 +8,14 @@ from typing import Optional
 class UserCreate(BaseModel):
     """Payload for POST /auth/register."""
     email: EmailStr
+    username: str
     password: str
+    full_name: str | None = None
+
+
+class UserUpdate(BaseModel):
+    """Payload for PUT /auth/profile."""
+    username: str | None = None
     full_name: str | None = None
 
 
@@ -29,6 +36,7 @@ class UserResponse(BaseModel):
     """Public-facing user representation (never exposes password_hash)."""
     id: str
     email: str
+    username: str | None = None
     full_name: str | None = None
     role: str = "user"
     preferred_language: str | None = None

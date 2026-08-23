@@ -1,5 +1,6 @@
 import type {
   AuthResponse,
+  UserOut,
   Case,
   ChatResponse,
   EvidenceResponse,
@@ -7,8 +8,7 @@ import type {
   GeneratedDocument,
 } from "@/lib/types";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
+const API_BASE = "http://localhost:8000/api/v1";
 
 // ── Generic Fetch Wrapper ───────────────────────────────────────────────────
 
@@ -51,7 +51,7 @@ async function apiClient<T>(
     });
   } catch (err) {
     if (err instanceof TypeError && err.message === "Failed to fetch") {
-      throw new Error("Unable to connect to the server. Is the backend running on port 8080?");
+      throw new Error("Unable to connect to the server. Is the backend running on port 8000?");
     }
     throw err;
   }
@@ -82,11 +82,26 @@ export async function loginUser(
 export async function registerUser(
   email: string,
   password: string,
+  username: string,
   full_name: string,
 ): Promise<AuthResponse> {
   return apiClient<AuthResponse>("/auth/register", {
     method: "POST",
-    body: JSON.stringify({ email, password, full_name }),
+    body: JSON.stringify({ email, password, username, full_name }),
+  });
+}
+
+export async function fetchProfile(): Promise<UserOut> {
+  return apiClient<UserOut>("/auth/me");
+}
+
+export async function updateProfile(data: {
+  username?: string;
+  full_name?: string;
+}): Promise<UserOut> {
+  return apiClient<UserOut>("/auth/profile", {
+    method: "PUT",
+    body: JSON.stringify(data),
   });
 }
 
