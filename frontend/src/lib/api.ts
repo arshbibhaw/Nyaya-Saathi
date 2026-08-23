@@ -8,7 +8,7 @@ import type {
   GeneratedDocument,
 } from "@/lib/types";
 
-const API_BASE = "http://localhost:8000/api/v1";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
 
 // ── Generic Fetch Wrapper ───────────────────────────────────────────────────
 
