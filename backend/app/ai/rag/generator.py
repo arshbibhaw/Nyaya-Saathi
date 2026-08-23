@@ -61,3 +61,19 @@ def generate_response(
         return response.choices[0].message.content
     except Exception as e:
         return f"I encountered an error while trying to process your request: {e}"
+
+
+def generate_response_stream(
+    query: str,
+    context: list[dict],
+    case_history: list[dict],
+):
+    """
+    Stream AI response chunks grounded in legal context.
+    """
+    response_text = generate_response(query, context, case_history)
+    # Stream in small words/tokens for SSE
+    words = response_text.split(" ")
+    for i, word in enumerate(words):
+        yield word + (" " if i < len(words) - 1 else "")
+

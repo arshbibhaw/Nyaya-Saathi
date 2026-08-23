@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { UserOut } from "@/lib/types";
-import { loginUser, registerUser } from "@/lib/api";
+import { loginUser, registerUser, fetchProfile, updateProfile } from "@/lib/api";
 
 interface AuthState {
   user: UserOut | null;
@@ -15,8 +15,11 @@ interface AuthState {
   register: (
     email: string,
     password: string,
+    username: string,
     full_name: string,
   ) => Promise<void>;
+  fetchProfile: () => Promise<void>;
+  updateProfile: (data: { username?: string; full_name?: string }) => Promise<void>;
   logout: () => void;
   clearError: () => void;
   setHasHydrated: (state: boolean) => void;
@@ -52,10 +55,10 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      register: async (email, password, full_name) => {
+      register: async (email, password, username, full_name) => {
         set({ isLoading: true, error: null });
         try {
-          const res = await registerUser(email, password, full_name);
+          const res = await registerUser(email, password, username, full_name);
           localStorage.setItem("token", res.access_token);
           set({
             user: res.user,
@@ -68,6 +71,33 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
             error:
               err instanceof Error ? err.message : "Registration failed",
+          });
+          throw err;
+        }
+      },
+
+      fetchProfile: async () => {
+        set({ isLoading: true, error: null });
+        try {
+          const user = await fetchProfile();
+          set({ user, isLoading: false });
+        } catch (err) {
+          set({
+            isLoading: false,
+            error: err instanceof Error ? err.message : "Failed to fetch profile",
+          });
+        }
+      },
+
+      updateProfile: async (data) => {
+        set({ isLoading: true, error: null });
+        try {
+          const user = await updateProfile(data);
+          set({ user, isLoading: false });
+        } catch (err) {
+          set({
+            isLoading: false,
+            error: err instanceof Error ? err.message : "Failed to update profile",
           });
           throw err;
         }

@@ -24,7 +24,6 @@ from PIL import Image
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
-
 import os
 
 # Configure tesseract binary path from env

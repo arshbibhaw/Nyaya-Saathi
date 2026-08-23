@@ -37,7 +37,10 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE_MB: int = 10
 
     # --- CORS ---
-    CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8000")
+    CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:8000")
+
+    # --- OCR ---
+    TESSERACT_CMD: str = os.getenv("TESSERACT_CMD", "tesseract")
 
     # --- OCR ---
     TESSERACT_CMD: str = os.getenv("TESSERACT_CMD", "tesseract")
