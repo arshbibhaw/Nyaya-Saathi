@@ -3,6 +3,7 @@ Case routes: create, list, get, and chat.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db, get_current_user
@@ -10,7 +11,7 @@ from app.models.user import User
 from app.models.case import Case
 from app.models.case_question import CaseQuestion
 from app.schemas.case import CaseCreate, CaseResponse, ChatMessage, ChatResponse
-from app.services.case_service import classify_and_create_case, handle_chat
+from app.services.case_service import classify_and_create_case, handle_chat_stream
 
 router = APIRouter(prefix="/cases", tags=["Cases"])
 
@@ -51,14 +52,14 @@ def get_case(
     return case
 
 
-@router.post("/{case_id}/chat", response_model=ChatResponse)
+@router.post("/{case_id}/chat")
 def chat(
     case_id: str,
     payload: ChatMessage,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Send a message in the context of a case and get an AI response."""
+    """Send a message in the context of a case and stream an AI response."""
     case = db.query(Case).filter(Case.id == case_id, Case.user_id == user.id).first()
     if not case:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
@@ -68,12 +69,8 @@ def chat(
     db.add(user_msg)
     db.commit()
 
-    # Generate AI response
-    response = handle_chat(db, case, payload.message)
-
-    # Persist the AI response
-    ai_msg = CaseQuestion(case_id=case_id, question=response.response, role="assistant")
-    db.add(ai_msg)
-    db.commit()
-
-    return response
+    # Stream AI response
+    return StreamingResponse(
+        handle_chat_stream(db, case, payload.message), 
+        media_type="text/event-stream"
+    )

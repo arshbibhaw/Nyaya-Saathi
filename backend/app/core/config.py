@@ -40,9 +40,15 @@ class Settings(BaseSettings):
     # --- CORS ---
     CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8000")
 
+    # --- OCR ---
+    TESSERACT_CMD: str = os.getenv("TESSERACT_CMD", "tesseract")
+
     class Config:
         env_file = ".env"
         extra = "ignore"
 
 
 settings = Settings()
+
+def get_settings() -> Settings:
+    return settings

@@ -242,7 +242,7 @@ export default function NewCasePage() {
               <div className="space-y-6">
                 <Card className="shadow-sm">
                   <CardContent className="p-6">
-                    <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Here's what we understood</h3>
+                    <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Here&apos;s what we understood</h3>
                     
                     <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div>

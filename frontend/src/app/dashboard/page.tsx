@@ -5,12 +5,10 @@ import Link from "next/link";
 import { 
   Plus, 
   FolderOpen, 
-  Clock, 
   AlertCircle,
   FileText,
   Upload,
   ArrowRight,
-  MoreVertical,
   Briefcase
 } from "lucide-react";
 
@@ -112,7 +110,7 @@ export default function DashboardPage() {
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-semibold text-slate-900 dark:text-slate-100 text-sm">
                               {/* Using hackathon mock category if present or fallback */}
-                              {"Cyber Financial Fraud" || c.domain}
+                              {c.domain || "Cyber Financial Fraud"}
                             </span>
                             {getStatusBadge(c.status)}
                           </div>

@@ -12,7 +12,7 @@ from app.models.document import Document
 from app.schemas.case import ChatResponse
 from app.ai.classifier import analyze_and_classify_legal_matter
 from app.ai.rag.retriever import retrieve_relevant_legal_sources
-from app.ai.rag.generator import generate_response
+from app.ai.rag.generator import generate_response, generate_response_stream
 
 logger = logging.getLogger(__name__)
 
@@ -143,6 +143,59 @@ def handle_chat(db: Session, case: Case, message: str) -> ChatResponse:
         sources=sources,
         follow_up_questions=[],
     )
+
+
+def handle_chat_stream(db: Session, case: Case, message: str):
+    """
+    Handle a single chat turn as an SSE stream:
+    1. Retrieve relevant legal context via RAG.
+    2. Yield sources immediately.
+    3. Stream AI response chunks.
+    4. Persist the full response to DB once complete.
+    """
+    import json
+
+    # 1. Retrieve legal context
+    context_chunks = retrieve_relevant_legal_sources(
+        db=db,
+        query=message,
+        domain=case.domain,
+    )
+
+    # 2. Gather conversation history
+    history = (
+        db.query(CaseQuestion)
+        .filter(CaseQuestion.case_id == case.id)
+        .order_by(CaseQuestion.timestamp)
+        .all()
+    )
+    history_dicts = [
+        {"role": q.role, "content": q.question} for q in history
+    ]
+
+    # Extract source references from context
+    sources = [
+        {"title": c.get("title", ""), "source_url": c.get("source_url", "")}
+        for c in context_chunks
+    ]
+
+    # Yield sources first
+    yield f"data: {json.dumps({'type': 'sources', 'sources': sources})}\n\n"
+
+    # 3. Stream generated response
+    full_response = ""
+    for chunk in generate_response_stream(
+        query=message,
+        context=context_chunks,
+        case_history=history_dicts,
+    ):
+        full_response += chunk
+        yield f"data: {json.dumps({'type': 'chunk', 'text': chunk})}\n\n"
+
+    # 4. Persist the AI response
+    ai_msg = CaseQuestion(case_id=case.id, question=full_response, role="assistant")
+    db.add(ai_msg)
+    db.commit()
 
 
 def generate_action_plan(db: Session, case: Case) -> ActionPlan:

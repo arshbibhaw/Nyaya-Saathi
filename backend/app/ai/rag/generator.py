@@ -52,14 +52,12 @@ def generate_response(
     messages.extend(case_history)
     messages.append({"role": "user", "content": query})
     
-    async def _run_generation():
-        try:
-            result = await client.complete(
-                messages=messages,
-                step="rag_generation"
-            )
-            return result["content"]
-        except Exception as e:
-            return f"I encountered an error while trying to process your request: {e}"
-            
-    return asyncio.run(_run_generation())
+    try:
+        response = client.chat.completions.create(
+            model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
+            messages=messages,
+            temperature=0.3,
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"I encountered an error while trying to process your request: {e}"
