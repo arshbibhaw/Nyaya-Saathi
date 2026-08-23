@@ -133,6 +133,69 @@ export async function sendChatMessage(
   });
 }
 
+export async function sendChatMessageStream(
+  caseId: string,
+  message: string,
+  onChunk: (chunk: string) => void,
+  onSources: (sources: { act: string; section: string; text?: string }[]) => void,
+): Promise<void> {
+  const url = `${API_BASE}/cases/${caseId}/chat`;
+  const authHeaders = await getAuthHeaders();
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders,
+    },
+    body: JSON.stringify({ message }),
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(res.status, body.detail ?? "Failed to stream chat");
+  }
+
+  if (!res.body) throw new Error("No response body for stream");
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const parts = buffer.split("\n\n");
+    
+    // Process all complete chunks
+    for (let i = 0; i < parts.length - 1; i++) {
+      const part = parts[i].trim();
+      if (part.startsWith("data: ")) {
+        try {
+          const data = JSON.parse(part.substring(6));
+          if (data.type === "sources") {
+            // Map backend sources to frontend Citation type
+            const mappedSources = data.sources.map((s: { title?: string; source_url?: string }) => ({
+              act: s.title || "Reference",
+              section: "",
+              text: s.source_url
+            }));
+            onSources(mappedSources);
+          } else if (data.type === "chunk") {
+            onChunk(data.text);
+          }
+        } catch (e) {
+          console.error("Failed to parse SSE data:", e);
+        }
+      }
+    }
+    // Keep the incomplete part in the buffer
+    buffer = parts[parts.length - 1];
+  }
+}
+
 // ── Evidence ────────────────────────────────────────────────────────────────
 
 export async function uploadEvidence(

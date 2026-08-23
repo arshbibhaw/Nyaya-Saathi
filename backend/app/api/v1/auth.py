@@ -1,5 +1,5 @@
 """
-Authentication routes: register and login.
+Authentication routes: register, login, me, logout.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -34,6 +34,7 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
         username=payload.username,
         full_name=payload.full_name,
         password_hash=hash_password(payload.password),
+        full_name=payload.full_name,
     )
     db.add(user)
     db.commit()
@@ -50,7 +51,6 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
 def login(payload: UserLogin, db: Session = Depends(get_db)):
     """Authenticate a user and return a JWT."""
     user = db.query(User).filter(User.email == payload.email).first()
-    
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -67,7 +67,7 @@ def login(payload: UserLogin, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserResponse)
 def get_me(user: User = Depends(get_current_user)):
     """Get the currently logged in user."""
-    return user
+    return UserResponse.model_validate(user)
 
 
 @router.put("/profile", response_model=UserResponse)
@@ -92,3 +92,9 @@ def update_profile(
     db.commit()
     db.refresh(user)
     return user
+
+
+@router.post("/logout", status_code=status.HTTP_200_OK)
+def logout():
+    """Logout endpoint (no-op for stateless JWT, provided for API completeness)."""
+    return {"detail": "Logged out successfully"}

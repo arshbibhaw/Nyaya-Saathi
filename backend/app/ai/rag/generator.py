@@ -35,16 +35,10 @@ def generate_response(
         actual LLM call.  Use ``GENERATOR_PROMPT`` as the system
         message and inject *context* into the prompt.
     """
-    import os
-    from openai import OpenAI
+    import asyncio
+    from app.ai.llm.client import LLMClient
     
-    # Simple synchronous OpenAI client
-    api_key = os.getenv("LLM_API_KEY", os.getenv("OPENAI_API_KEY"))
-    
-    if not api_key:
-        return "System error: LLM_API_KEY environment variable is not configured."
-
-    client = OpenAI(api_key=api_key)
+    client = LLMClient()
     
     context_str = "\n\n".join(
         f"[Source: {c.get('title', 'Unknown')}]\n{c.get('chunk_text', '')}" 
@@ -55,10 +49,7 @@ def generate_response(
         {"role": "system", "content": GENERATOR_PROMPT.format(context=context_str)},
     ]
     
-    # Append case history
     messages.extend(case_history)
-    
-    # Append current user query
     messages.append({"role": "user", "content": query})
     
     try:

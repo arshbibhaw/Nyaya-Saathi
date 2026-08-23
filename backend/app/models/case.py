@@ -18,12 +18,22 @@ class Case(Base):
     user_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    title: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     domain: Mapped[str | None] = mapped_column(String(100), nullable=True)
     issue: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    status: Mapped[str] = mapped_column(String(50), default="new")
+    subcategory: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    urgency: Mapped[str | None] = mapped_column(String(50), nullable=True, default="MEDIUM")
+    location: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    status: Mapped[str] = mapped_column(String(50), default="DRAFT")
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # Relationships
@@ -32,3 +42,6 @@ class Case(Base):
     evidence = relationship("Evidence", back_populates="case", cascade="all, delete-orphan")
     action_plans = relationship("ActionPlan", back_populates="case", cascade="all, delete-orphan")
     documents = relationship("Document", back_populates="case", cascade="all, delete-orphan")
+    escalations = relationship("Escalation", back_populates="case", cascade="all, delete-orphan")
+    evidence_checklist = relationship("EvidenceChecklist", back_populates="case", cascade="all, delete-orphan")
+

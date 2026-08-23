@@ -24,9 +24,14 @@ from PIL import Image
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+<<<<<<< HEAD
+=======
+
+import os
+>>>>>>> origin/main
 
 # Configure tesseract binary path from env
-pytesseract.pytesseract.tesseract_cmd = settings.TESSERACT_CMD
+pytesseract.pytesseract.tesseract_cmd = os.getenv("TESSERACT_CMD", r"C:\Program Files\Tesseract-OCR\tesseract.exe")
 
 # MIME types we treat as images (send to tesseract directly)
 _IMAGE_MIMES = {

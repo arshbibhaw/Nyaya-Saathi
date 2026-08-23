@@ -1,35 +1,20 @@
 """
-Nyaya Saathi — Master Legal Classification, Reasoning & Precision Validation Engine
-===================================================================================
-Incorporates the 13-Point Legal Precision and Procedural Validation Layer:
-  A. Absolute Claim Filter (Eliminates dogmatic assertions; adopts calibrated modal language)
-  B. Express Contract vs Restitution Rule (Contractual remedies primary; Quantum Meruit alternative)
-  C. Interest Validation Rule (No arbitrary interest rates; contingent on contract/statute/court)
-  D. Special Procedure Eligibility Checks (Order 37 CPC, MSME Samadhaan, Commercial Courts verified)
-  E. Acceptance Evidence Rule (Acceptance treated as strong evidentiary support, not conclusive estoppel)
-  F. Limitation Verification Rule (Limitation dates verified against cause of action)
-  G. Forum Rule (Uses 'competent court having territorial and pecuniary jurisdiction')
-  H. Remedy Filter (Excludes disproportionate remedies like asset freezing from simple debt recovery)
-  I. Professional Legal Notice Language (Client instructions vs Allegations vs Disputed contentions)
-  J. Deadline Validation (Distinguishes reasonable notice windows from statutory mandates)
-  K. Component-Calibrated Confidence Scoring (Classification, Statutory, Forum, Remedy scores)
-  L. Claim vs Remedy Distinction (Separates legal entitlement from procedural remedies)
-  M. Categorical Distinctions (Proven Fact vs Allegation vs Legal Rule vs Inference vs Outcome)
+Nyaya Saathi — Master Legal Classification & Validation Engine
+Leverages LLMClient with Structured Outputs (JSON Mode + Pydantic)
 """
 
-from __future__ import annotations
+import asyncio
+from typing import Any, Dict, List, Optional
+from pydantic import BaseModel, Field
 
-import re
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from app.ai.llm.client import LLMClient
 
 
 # ===========================================================================
-# Calibrated Data Structures
+# Pydantic Schemas for Structured Output
 # ===========================================================================
 
-@dataclass
-class CalibratedPartyProfile:
+class CalibratedPartyProfile(BaseModel):
     claimant_name: str
     claimant_role: str
     opposite_party_name: str
@@ -42,35 +27,26 @@ class CalibratedPartyProfile:
     alleged_harm_or_breach: str
     relief_sought: str
 
-
-@dataclass
-class StatutoryProvisionItem:
+class StatutoryProvisionItem(BaseModel):
     statute_name: str
     section_number: str
     relevance: str
-    certainty_level: str  # "Primary Governing Law", "Alternative / Quasi-Contract Remedy", "Procedural Mechanism", "Subject to Verification"
+    certainty_level: str
 
+class CalibratedConfidence(BaseModel):
+    classification_confidence: float
+    statutory_applicability_confidence: float
+    forum_confidence: float
+    remedy_confidence: float
+    overall_score: float
+    confidence_level_display: str
 
-@dataclass
-class CalibratedConfidence:
-    classification_confidence: float     # e.g., 0.90 (90%)
-    statutory_applicability_confidence: float # e.g., 0.88 (88%)
-    forum_confidence: float              # e.g., 0.65 (65%)
-    remedy_confidence: float             # e.g., 0.60 (60%)
-    overall_score: float                 # Calibrated harmonized score (e.g., 0.76)
-    confidence_level_display: str        # "HIGH (85–100%)", "MEDIUM (60–84%)", "LOW (<60%)"
-
-
-@dataclass
-class CalibratedLegalNoticeDraft:
+class CalibratedLegalNoticeDraft(BaseModel):
     title: str
     subject: str
     notice_text: str
 
-
-@dataclass
-class MasterLegalAnalysisResult:
-    # [1] LEGAL CLASSIFICATION
+class MasterLegalAnalysisResult(BaseModel):
     primary_domain: str
     primary_domain_display: str
     subcategory: str
@@ -80,225 +56,79 @@ class MasterLegalAnalysisResult:
     urgency: str
     short_legal_reasoning: str
 
-    # [2] PARTY AND RELATIONSHIP ANALYSIS
     parties: CalibratedPartyProfile
 
-    # [3] CORE LEGAL ISSUES & EVIDENTIARY FACT CATEGORIZATION
     primary_legal_issue: str
     secondary_legal_issues: List[str]
-    stated_facts: List[str]                  # Narrative-only statements
-    documented_facts: List[str]              # Supported by uploaded / verified documents
-    established_facts: List[str]             # Admitted by both parties or determined by authority
+    stated_facts: List[str]
+    documented_facts: List[str]
+    established_facts: List[str]
     factual_uncertainties_requiring_verification: List[str]
 
-    # [4] APPLICABLE LEGAL FRAMEWORK
     primary_laws: List[StatutoryProvisionItem]
     secondary_and_alternative_laws: List[StatutoryProvisionItem]
     procedural_and_limitation_laws: List[StatutoryProvisionItem]
 
-    # [5] POTENTIAL FORUM AND JURISDICTION
     potential_forum: str
     forum_rationale: str
     jurisdictional_requirements: str
     jurisdiction_verification_notes: str
 
-    # [6] MATERIAL FOLLOW-UP QUESTIONS
     material_follow_up_questions: List[Dict[str, str]]
 
-    # [7] RELEVANT EVIDENCE
     essential_evidence: List[str]
     supporting_evidence: List[str]
     digital_evidence: List[str]
     documents_to_preserve: List[str]
 
-    # [8] POSSIBLE REMEDIES
     possible_remedies: List[str]
 
-    # [9] ACTION PLAN
     immediate_preservation_step: str
     communication_or_notice_step: str
     statutory_authority_or_court_step: str
     time_sensitive_actions: str
     escalation_path: str
 
-    # [10] LEGAL NOTICE DRAFT
     legal_notice: Optional[CalibratedLegalNoticeDraft] = None
 
-    # Key Entities
-    key_entities: Dict[str, Any] = field(default_factory=dict)
-
-    @property
-    def proven_facts(self) -> List[str]:
-        return self.documented_facts or self.stated_facts
-
-    @property
-    def party_allegations(self) -> List[str]:
-        return self.stated_facts
-
-    @property
-    def confidence_level(self) -> str:
-        return self.confidence.confidence_level_display
-
-    @property
-    def confidence_score(self) -> float:
-        return self.confidence.overall_score
-
-    @property
-    def factual_uncertainties(self) -> List[str]:
-        return self.factual_uncertainties_requiring_verification
-
-    @property
-    def secondary_laws(self) -> List[StatutoryProvisionItem]:
-        return self.secondary_and_alternative_laws
-
-    @property
-    def procedural_laws(self) -> List[StatutoryProvisionItem]:
-        return self.procedural_and_limitation_laws
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "legal_classification": {
-                "primary_domain": self.primary_domain,
-                "primary_domain_display": self.primary_domain_display,
-                "subcategory": self.subcategory,
-                "subcategory_display": self.subcategory_display,
-                "secondary_domains": self.secondary_domains,
-                "confidence_score": round(self.confidence.overall_score, 3),
-                "confidence_breakdown": {
-                    "classification": round(self.confidence.classification_confidence, 2),
-                    "statutory_applicability": round(self.confidence.statutory_applicability_confidence, 2),
-                    "forum_jurisdiction": round(self.confidence.forum_confidence, 2),
-                    "remedy_entitlement": round(self.confidence.remedy_confidence, 2),
-                },
-                "confidence_level": self.confidence.confidence_level_display,
-                "urgency": self.urgency,
-                "short_legal_reasoning": self.short_legal_reasoning,
-            },
-            "party_and_relationship_analysis": {
-                "claimant_name": self.parties.claimant_name,
-                "claimant_role": self.parties.claimant_role,
-                "opposite_party_name": self.parties.opposite_party_name,
-                "opposite_party_role": self.parties.opposite_party_role,
-                "legal_relationship": self.parties.legal_relationship,
-                "nature_of_transaction": self.parties.nature_of_transaction,
-                "who_provided_goods_or_services": self.parties.who_provided_goods_or_services,
-                "who_owes_money_or_duty": self.parties.who_owes_money_or_duty,
-                "alleged_conduct": self.parties.alleged_conduct,
-                "alleged_harm_or_breach": self.parties.alleged_harm_or_breach,
-                "relief_sought": self.parties.relief_sought,
-            },
-            "core_legal_issues": {
-                "primary_legal_issue": self.primary_legal_issue,
-                "secondary_legal_issues": self.secondary_legal_issues,
-                "proven_facts": self.proven_facts,
-                "party_allegations": self.party_allegations,
-                "factual_uncertainties": self.factual_uncertainties_requiring_verification,
-            },
-            "applicable_legal_framework": {
-                "primary_laws": [{"statute": p.statute_name, "section": p.section_number, "relevance": p.relevance, "certainty": p.certainty_level} for p in self.primary_laws],
-                "secondary_and_alternative_laws": [{"statute": p.statute_name, "section": p.section_number, "relevance": p.relevance, "certainty": p.certainty_level} for p in self.secondary_and_alternative_laws],
-                "procedural_and_limitation_laws": [{"statute": p.statute_name, "section": p.section_number, "relevance": p.relevance, "certainty": p.certainty_level} for p in self.procedural_and_limitation_laws],
-            },
-            "potential_forum_and_jurisdiction": {
-                "potential_forum": self.potential_forum,
-                "forum_rationale": self.forum_rationale,
-                "jurisdictional_requirements": self.jurisdictional_requirements,
-                "jurisdiction_verification_notes": self.jurisdiction_verification_notes,
-            },
-            "material_follow_up_questions": self.material_follow_up_questions,
-            "relevant_evidence": {
-                "essential_evidence": self.essential_evidence,
-                "supporting_evidence": self.supporting_evidence,
-                "digital_evidence": self.digital_evidence,
-                "documents_to_preserve": self.documents_to_preserve,
-            },
-            "possible_remedies": self.possible_remedies,
-            "action_plan": {
-                "step_1_immediate_preservation": self.immediate_preservation_step,
-                "step_2_communication_notice": self.communication_or_notice_step,
-                "step_3_statutory_authority_court": self.statutory_authority_or_court_step,
-                "step_4_time_sensitive_actions": self.time_sensitive_actions,
-                "step_5_escalation_path": self.escalation_path,
-            },
-            "legal_notice": self.legal_notice.notice_text if self.legal_notice else None,
-            "key_entities": self.key_entities,
-        }
-
 
 # ===========================================================================
-# Entity Extractor
+# LLM Integration
 # ===========================================================================
 
-def extract_entities(text: str) -> Dict[str, Any]:
-    """Extract monetary amounts, dates, and names."""
-    entities: Dict[str, Any] = {
-        "amounts": [],
-        "dates": [],
-        "named_entities": [],
-    }
+SYSTEM_PROMPT = """You are the Nyaya Saathi Legal Classification Engine (India).
+You must analyze the user's issue and return ONLY a valid JSON object matching the requested schema.
 
-    amounts = re.findall(
-        r"(?:(?:rs\.?|inr|₹)\s*[\d,]+(?:\.\d+)?(?:\s*(?:lakhs?|crores?|thousand|k))?)|(?:\b\d+(?:,\d+)*(?:\s*(?:lakhs?|crores?|thousand))\b)",
-        text,
-        re.IGNORECASE,
-    )
-    if amounts:
-        entities["amounts"] = list(dict.fromkeys(amounts))
-
-    dates = re.findall(
-        r"\b(?:\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})|(?:\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s*,?\s*\d{4})\b",
-        text,
-        re.IGNORECASE,
-    )
-    if dates:
-        entities["dates"] = list(dict.fromkeys(dates))
-
-    proper_names = re.findall(
-        r"\b([A-Z][A-Za-z0-9&]+(?:\s+[A-Z][A-Za-z0-9&]+)*(?:\s+(?:Solutions|Events|Pvt\.?\s*Ltd\.?|Technologies|LLP|Enterprises|Corporation|Inc|Limited))?)\b",
-        text,
-    )
-    if proper_names:
-        stopwords = {"The", "A", "An", "Section", "Act", "Court", "Order", "Notice", "India", "Indian", "Consumer", "Contract"}
-        cleaned = [p.strip() for p in proper_names if p.strip() not in stopwords and len(p.strip()) > 3]
-        entities["named_entities"] = list(dict.fromkeys(cleaned))
-
-    return entities
-
-
-# ===========================================================================
-# Master Legal Analysis & Validation Engine
-# ===========================================================================
+CRITICAL RULES:
+1. ABSOLUTE CLAIM FILTER: Reject/rewrite statements containing "cannot", "always", "never", "automatically", "conclusively". Use "may", "could", "appears to", "subject to verification".
+2. CONTRACT VS RESTITUTION: Contractual remedies are primary. Section 70/Quantum Meruit is alternative.
+3. MSME RULE: Do not determine MSMED Act eligibility solely from Udyam registration; verify supplier status.
+4. SUMMARY SUIT RULE: Do not automatically assume Order 37 CPC applies without a written contract for liquidated debt.
+5. FACTS: Distinguish between STATED FACTS (narrative only), DOCUMENTED FACTS (supported by evidence), and ESTABLISHED FACTS (admitted).
+"""
 
 def analyze_and_classify_legal_matter(user_input: str, evidence_text: str = "") -> MasterLegalAnalysisResult:
     """
-    Executes the 11-Phase Legal Reasoning Protocol with complete precision filtering.
+    Executes the 11-Phase Legal Reasoning Protocol using the asynchronous LLMClient,
+    wrapped synchronously for database compatibility.
     """
-    combined_text = f"{user_input}\n{evidence_text}".strip()
-    lower = combined_text.lower()
-    entities = extract_entities(combined_text)
-    named = entities.get("named_entities", [])
-
-    # Identify candidate party names
-    claimant_name = "TechNova Solutions" if "technova" in lower else (named[0] if len(named) > 0 else "Claimant")
-    opposite_name = "ABC Events Pvt. Ltd." if "abc events" in lower else (named[1] if len(named) > 1 else "Opposite Party")
-
-    # -----------------------------------------------------------------------
-    # SCENARIO 1: CONTRACTUAL SERVICE PROVIDER NON-PAYMENT
-    # -----------------------------------------------------------------------
-    if any(k in lower for k in ["contract to develop", "completed the website", "signed a contract", "delivered all the agreed features", "remaining 30,000", "unpaid amount", "tested and accepted the website", "service provider", "freelance payment"]):
-        parties = CalibratedPartyProfile(
-            claimant_name=claimant_name,
-            claimant_role="Service Provider / Independent Contractor (Startup)",
-            opposite_party_name=opposite_name,
-            opposite_party_role="Client / Corporate Recipient of Services",
-            legal_relationship="Contractor and Client governed by a professional service contract",
-            nature_of_transaction="Website development, testing, deployment, and management services",
-            who_provided_goods_or_services=f"According to instructions, {claimant_name} completed and delivered the agreed website features",
-            who_owes_money_or_duty=f"Allegation that {opposite_name} owes the remaining contractual sum of ₹30,000",
-            alleged_conduct="Client refuses remaining contractual payment after delivery and initial testing, citing post-delivery design dissatisfaction",
-            alleged_harm_or_breach="Alleged contractual non-payment of ₹30,000 balance for completed services",
-            relief_sought="Recovery of the outstanding ₹30,000 contractual balance, applicable interest, and potential damages for delay",
+    client = LLMClient()
+    
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": f"Issue:\n{user_input}\n\nEvidence:\n{evidence_text}"}
+    ]
+    
+    async def _run_classification():
+        # complete_structured enforces the JSON schema of MasterLegalAnalysisResult!
+        result = await client.complete_structured(
+            messages=messages,
+            response_model=MasterLegalAnalysisResult,
+            step="legal_classification"
         )
+        return result["parsed"]
+        
+    return asyncio.run(_run_classification())
 
         confidence = CalibratedConfidence(
             classification_confidence=0.95,
