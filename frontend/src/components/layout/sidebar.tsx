@@ -103,6 +103,7 @@ export function Sidebar() {
               { href: "/cases", label: "My Cases", icon: FolderOpen },
               { href: "/documents", label: "Documents", icon: FileText },
               { href: "/resources", label: "Resources", icon: BookOpen },
+              { href: "/profile", label: "Profile & Settings", icon: User },
             ].map((item) => {
               const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
               return (
@@ -133,15 +134,27 @@ export function Sidebar() {
         <Separator className="opacity-20 mx-6 w-auto" />
 
         {/* User Footer */}
-        <div className="p-4 mb-4">
-          <button
-            onClick={() => setIsProfileOpen(true)}
-            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 min-w-0 hover:bg-[#28352F]/50 transition-colors text-left text-slate-400 hover:text-white group"
-            aria-label="Open Profile"
+        <div className="p-4 mb-2">
+          <Link
+            href="/profile"
+            onClick={() => setMobileOpen(false)}
+            className="flex w-full items-center gap-3 rounded-xl p-3 min-w-0 bg-[#28352F]/40 hover:bg-[#28352F] border border-[#3E5248]/50 transition-all text-left group"
+            aria-label="Open Profile Dashboard"
           >
-            <User className="size-5 group-hover:text-[#C49B63]" />
-            <span className="text-sm font-medium">Profile</span>
-          </button>
+            <Avatar className="size-9 border border-[#C49B63]/40 bg-[#C49B63]/20 shrink-0">
+              <AvatarFallback className="bg-[#C49B63] text-[#19201D] font-bold text-xs">
+                {(user?.username || user?.full_name || "NS").slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="text-sm font-semibold text-white truncate leading-snug group-hover:text-[#C49B63] transition-colors">
+                {user?.username ? `@${user.username}` : (user?.full_name || "My Account")}
+              </span>
+              <span className="text-[11px] text-slate-400 truncate">
+                {user?.email || "Click for profile dashboard"}
+              </span>
+            </div>
+          </Link>
         </div>
       </aside>
 
