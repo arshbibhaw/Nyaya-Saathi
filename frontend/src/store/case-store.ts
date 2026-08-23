@@ -9,7 +9,7 @@ interface CaseState {
   error: string | null;
 
   fetchCases: () => Promise<void>;
-  createCase: (issue: string) => Promise<Case>;
+  createCase: (issue: string, location?: string) => Promise<Case>;
   setActiveCase: (c: Case | null) => void;
   loadCase: (caseId: string) => Promise<void>;
 }
@@ -33,10 +33,10 @@ export const useCaseStore = create<CaseState>()((set, get) => ({
     }
   },
 
-  createCase: async (issue: string) => {
+  createCase: async (issue: string, location?: string) => {
     set({ isLoading: true, error: null });
     try {
-      const newCase = await apiCreateCase(issue);
+      const newCase = await apiCreateCase(issue, location);
       set((state) => ({
         cases: [newCase, ...state.cases],
         activeCase: newCase,
@@ -55,17 +55,23 @@ export const useCaseStore = create<CaseState>()((set, get) => ({
   setActiveCase: (c) => set({ activeCase: c }),
 
   loadCase: async (caseId: string) => {
-    // Check if we already have it
-    const existing = get().cases.find((c) => c.id === caseId);
-    if (existing) {
-      set({ activeCase: existing });
-      return;
-    }
+    // Try to load fresh from API
     set({ isLoading: true });
     try {
       const c = await getCase(caseId);
-      set({ activeCase: c, isLoading: false });
+      set((state) => {
+        const index = state.cases.findIndex((item) => item.id === caseId);
+        const updatedCases = index >= 0
+          ? state.cases.map((item, i) => (i === index ? c : item))
+          : [c, ...state.cases];
+        return { activeCase: c, cases: updatedCases, isLoading: false };
+      });
     } catch (err) {
+      const existing = get().cases.find((c) => c.id === caseId);
+      if (existing) {
+        set({ activeCase: existing, isLoading: false });
+        return;
+      }
       set({
         isLoading: false,
         error: err instanceof Error ? err.message : "Failed to load case",

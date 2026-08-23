@@ -346,13 +346,13 @@ export default function LandingPage() {
 
           </div>
 
-          {/* Subtle Nyaya Saathi Background Watermark */}
-          <div className="w-full flex justify-center items-center pointer-events-none select-none my-4">
+          {/* Big NyayaSaathi Background Text */}
+          <div className="w-full flex justify-center items-center pointer-events-none select-none my-6">
             <span 
-              className="text-[6.5vw] md:text-[5.5vw] lg:text-[5vw] xl:text-[4.2rem] font-bold tracking-tight text-white/[0.03] leading-none whitespace-nowrap text-center"
-              style={{ WebkitTextStroke: "1px rgba(255,255,255,0.04)" }}
+              className="text-[17vw] font-bold tracking-tighter text-white/[0.04] leading-none whitespace-nowrap text-center"
+              style={{ WebkitTextStroke: "1px rgba(255,255,255,0.06)" }}
             >
-              NYAYA SAATHI
+              NyayaSaathi
             </span>
           </div>
 
