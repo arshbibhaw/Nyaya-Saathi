@@ -364,17 +364,14 @@ export default function LandingPage() {
           `}</style>
           <div className="flex whitespace-nowrap animate-footer-marquee">
             {[...Array(8)].map((_, i) => (
-              <div 
-                key={i} 
-                className="flex items-center whitespace-nowrap pr-8 cursor-pointer group/word transition-transform duration-300 ease-out hover:scale-[1.02]"
-              >
+              <div key={i} className="flex items-center whitespace-nowrap">
                 <span 
-                  className="text-[10vw] font-serif tracking-wide text-transparent uppercase leading-none transition-all duration-300 group-hover/word:text-slate-300 group-hover/word:[-webkit-text-stroke:0px] [-webkit-text-stroke:1.5px_rgba(255,255,255,0.5)]"
+                  className="text-[10vw] px-4 font-serif tracking-wide text-transparent uppercase leading-none inline-block transition-all duration-300 ease-out cursor-pointer hover:text-slate-300 hover:[-webkit-text-stroke:0px] hover:scale-[1.02] [-webkit-text-stroke:1.5px_rgba(255,255,255,0.5)]"
                 >
                   NYAYA SAATHI
                 </span>
                 <span 
-                  className="text-[10vw] font-serif tracking-wide text-transparent uppercase leading-none pointer-events-none ml-8 [-webkit-text-stroke:1.5px_rgba(255,255,255,0.5)]"
+                  className="text-[10vw] px-4 font-serif tracking-wide text-transparent uppercase leading-none inline-block transition-all duration-300 ease-out cursor-pointer hover:text-slate-300 hover:[-webkit-text-stroke:0px] hover:scale-[1.1] [-webkit-text-stroke:1.5px_rgba(255,255,255,0.5)]"
                 >
                   ○
                 </span>
