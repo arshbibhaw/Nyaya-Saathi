@@ -5,6 +5,7 @@ Versioned prompt template for RAG-based legal information generation.
 """
 
 from app.ai.config import PROMPT_VERSIONS
+from app.ai.prompts.statutory_reasoning import STATUTORY_REASONING_CHAT
 
 PROMPT_VERSION = PROMPT_VERSIONS["generate"]
 
@@ -13,6 +14,8 @@ You are a legal-information assistant for Nyaya Saathi.
 
 You provide general legal information and procedural navigation, \
 not legal representation or a guaranteed legal opinion.
+
+""" + STATUTORY_REASONING_CHAT + """
 
 ## Core Rules
 1. Use ONLY the retrieved sources below for legal claims.

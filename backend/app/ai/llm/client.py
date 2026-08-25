@@ -293,6 +293,70 @@ class LLMClient:
             "finish_reason": choice.finish_reason,
         }
 
+    async def _call_google(
+        self,
+        model: str,
+        messages: List[Dict[str, str]],
+        response_format: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Call Google Generative AI (Gemini)."""
+        client = self._get_client()
+        from app.core.config import settings
+        import os
+        api_key = getattr(settings, "GEMINI_API_KEY", None) or os.getenv("GEMINI_API_KEY")
+        client.configure(api_key=api_key)
+
+        system_instruction = None
+        contents = []
+        for msg in messages:
+            role = msg["role"]
+            text = msg["content"]
+            if role == "system":
+                if system_instruction is None:
+                    system_instruction = text
+                else:
+                    system_instruction += "\n" + text
+            else:
+                contents.append({
+                    "role": "model" if role == "assistant" else "user",
+                    "parts": [text]
+                })
+
+        generation_config = client.types.GenerationConfig(
+            temperature=self.temperature,
+            max_output_tokens=self.max_output_tokens,
+            top_p=TOP_P,
+        )
+        if response_format and response_format.get("type") == "json_object":
+            generation_config.response_mime_type = "application/json"
+
+        gen_model = client.GenerativeModel(
+            model_name=model,
+            system_instruction=system_instruction
+        )
+
+        response = await asyncio.wait_for(
+            gen_model.generate_content_async(
+                contents,
+                generation_config=generation_config
+            ),
+            timeout=self.timeout,
+        )
+
+        input_tokens = 0
+        output_tokens = 0
+        if hasattr(response, "usage_metadata") and response.usage_metadata:
+            input_tokens = response.usage_metadata.prompt_token_count
+            output_tokens = response.usage_metadata.candidates_token_count
+
+        return {
+            "content": response.text,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "total_tokens": input_tokens + output_tokens,
+            "finish_reason": "stop",
+        }
+
     async def _call_provider(
         self,
         model: str,
@@ -302,7 +366,9 @@ class LLMClient:
         """Dispatch to the configured provider."""
         if self.provider == "openai":
             return await self._call_openai(model, messages, response_format)
-        # Future: add google, anthropic implementations
+        elif self.provider == "google":
+            return await self._call_google(model, messages, response_format)
+        # Future: add anthropic implementations
         raise NotImplementedError(f"Provider {self.provider} not yet implemented")
 
     # ----- Public API: complete ---------------------------------------------
