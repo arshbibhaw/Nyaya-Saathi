@@ -75,7 +75,6 @@ const cardVariants: Variants = {
 const navLinks = [
   { name: "Features", href: "#features" },
   { name: "How it Works", href: "#how-it-works" },
-  { name: "Resources", href: "#resources" },
   { name: "Connect", href: "#connect" },
 ];
 
@@ -100,18 +99,18 @@ export default function LandingPage() {
           
           {/* Left Section: Brand Identity */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="size-11 rounded-full bg-white border border-slate-200/80 shadow-xs grid place-items-center transition-transform group-hover:scale-105">
+            <div className="size-11 rounded-full overflow-hidden border border-slate-200/80 shadow-xs grid place-items-center transition-transform group-hover:scale-105">
               <Image 
                 src="/logos/Symbol%20mark.png" 
                 alt="Nyaya Saathi Logo" 
                 width={44} 
                 height={44} 
-                className="w-[75%] h-[75%] object-contain" 
+                className="w-full h-full object-cover" 
               />
             </div>
             <div className="flex items-center gap-1.5 font-bold tracking-tight text-xl">
               <span className="text-[#0F172A]">Nyaya</span>
-              <span className="text-[#C49B63] font-serif">Saathi</span>
+              <span className="text-[#C49B63]">Saathi</span>
             </div>
           </Link>
 
@@ -387,7 +386,7 @@ export default function LandingPage() {
             <div>
               <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8892B0] mb-6">Resources</h4>
               <ul className="flex flex-col gap-3.5 text-[#CCD6F6] text-sm">
-                <li><Link href="/resources/rights" className="hover:text-white transition-colors">Legal Guides</Link></li>
+                <li><Link href="/guide" className="hover:text-white transition-colors">User Guide</Link></li>
                 <li><Link href="/resources" className="hover:text-white transition-colors">Legal Awareness</Link></li>
                 <li><Link href="/documents" className="hover:text-white transition-colors">Document Vault</Link></li>
                 <li><Link href="/action-plans" className="hover:text-white transition-colors">Action Plans</Link></li>
@@ -406,16 +405,6 @@ export default function LandingPage() {
                   <Link href="/cases/new" className="hover:text-white transition-colors flex items-center justify-between">
                     Start a Case <ArrowRight className="size-3 text-[#8892B0]" />
                   </Link>
-                </li>
-                <li>
-                  <a href="https://github.com" target="_blank" rel="noreferrer" className="hover:text-white transition-colors flex items-center justify-between">
-                    GitHub <ArrowRight className="size-3 text-[#8892B0]" />
-                  </a>
-                </li>
-                <li>
-                  <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="hover:text-white transition-colors flex items-center justify-between">
-                    LinkedIn <ArrowRight className="size-3 text-[#8892B0]" />
-                  </a>
                 </li>
               </ul>
             </div>
@@ -463,11 +452,9 @@ export default function LandingPage() {
           <div className="pt-4 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#8892B0]">
             <p>© {new Date().getFullYear()} Nyaya Saathi. All rights reserved.</p>
             <div className="flex items-center gap-4">
-              <Link href="/help" className="hover:text-white transition-colors">Privacy Policy</Link>
+              <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
               <span>·</span>
-              <Link href="/help" className="hover:text-white transition-colors">Terms of Use</Link>
-              <span>·</span>
-              <Link href="/help" className="hover:text-white transition-colors">Disclaimer</Link>
+              <Link href="/terms" className="hover:text-white transition-colors">Terms of Use</Link>
             </div>
           </div>
         </div>
