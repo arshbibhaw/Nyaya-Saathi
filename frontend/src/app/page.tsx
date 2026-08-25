@@ -346,15 +346,44 @@ export default function LandingPage() {
 
           </div>
 
-          {/* Big NyayaSaathi Background Text */}
-          <div className="w-full flex justify-center items-center pointer-events-none select-none my-6">
-            <span 
-              className="text-[17vw] font-bold tracking-tighter text-white/[0.04] leading-none whitespace-nowrap text-center"
-              style={{ WebkitTextStroke: "1px rgba(255,255,255,0.06)" }}
-            >
-              NyayaSaathi
-            </span>
+        </div>
+
+        {/* Infinite Scrolling Marquee Text - Full Width & Serif Font */}
+        <div className="relative w-full overflow-hidden select-none my-4 flex cursor-default pointer-events-auto group">
+          <style>{`
+            @keyframes footer-marquee {
+              0% { transform: translateX(0); }
+              100% { transform: translateX(-50%); }
+            }
+            .animate-footer-marquee {
+              animation: footer-marquee 40s linear infinite;
+            }
+            .group:hover .animate-footer-marquee {
+              animation-play-state: paused !important;
+            }
+          `}</style>
+          <div className="flex whitespace-nowrap animate-footer-marquee">
+            {[...Array(8)].map((_, i) => (
+              <div 
+                key={i} 
+                className="flex items-center whitespace-nowrap pr-8 cursor-pointer group/word transition-transform duration-300 ease-out hover:scale-[1.02]"
+              >
+                <span 
+                  className="text-[10vw] font-serif tracking-wide text-transparent uppercase leading-none transition-all duration-300 group-hover/word:text-slate-300 group-hover/word:[-webkit-text-stroke:0px] [-webkit-text-stroke:1.5px_rgba(255,255,255,0.5)]"
+                >
+                  NYAYA SAATHI
+                </span>
+                <span 
+                  className="text-[10vw] font-serif tracking-wide text-transparent uppercase leading-none pointer-events-none ml-8 [-webkit-text-stroke:1.5px_rgba(255,255,255,0.5)]"
+                >
+                  ○
+                </span>
+              </div>
+            ))}
           </div>
+        </div>
+
+        <div className="mx-auto max-w-7xl px-6 md:px-12 relative z-10">
 
           {/* Legal Disclaimer Line */}
           <div className="pt-4 border-t border-white/10">
