@@ -8,7 +8,7 @@ import type {
   GeneratedDocument,
 } from "@/lib/types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
 // ── Generic Fetch Wrapper ───────────────────────────────────────────────────
 
@@ -26,7 +26,7 @@ async function getAuthHeaders(): Promise<HeadersInit> {
   if (typeof window === "undefined") {
     return {};
   }
-  
+
   const token = localStorage.getItem("token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
@@ -36,7 +36,7 @@ async function apiClient<T>(
   options: RequestInit = {},
 ): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
-  
+
   const authHeaders = await getAuthHeaders();
 
   let res: Response;
@@ -169,7 +169,7 @@ export async function sendChatMessageStream(
 
     buffer += decoder.decode(value, { stream: true });
     const parts = buffer.split("\n\n");
-    
+
     // Process all complete chunks
     for (let i = 0; i < parts.length - 1; i++) {
       const part = parts[i].trim();
