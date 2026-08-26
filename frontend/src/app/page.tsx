@@ -363,8 +363,14 @@ export default function LandingPage() {
             
             <div className="flex flex-col gap-4 md:col-span-1">
               <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-full bg-white text-[#0A1118]">
-                  <Scale className="size-5" />
+                <div className="size-10 rounded-full overflow-hidden bg-white grid place-items-center">
+                  <Image 
+                    src="/logos/Symbol%20mark.png" 
+                    alt="Nyaya Saathi Logo" 
+                    width={40} 
+                    height={40} 
+                    className="w-full h-full object-cover" 
+                  />
                 </div>
                 <span className="text-2xl font-bold tracking-tight">Nyaya Saathi</span>
               </div>
