@@ -71,3 +71,7 @@ __pycache__/
 
 __pycache__/
 *.py[cod]
+
+# Temporary/generated files
+*.patch
+*.zip
