@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { 
   User as UserIcon, Loader2, Save, CheckCircle2, Shield, Trash2, Key, MapPin, 
   FileText, LogOut, Award, Activity, Scale, FolderOpen, Globe, Calendar, Lock,
-  AlertCircle
+  AlertCircle, Home, Building2
 } from "lucide-react";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -18,6 +18,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { INDIAN_STATES, UNION_TERRITORIES } from "@/lib/constants/states";
+import { Textarea } from "@/components/ui/textarea";
+import * as api from "@/lib/api";
+import type { ProfileStats } from "@/lib/types";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -35,7 +38,9 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     username: activeUser.username || "",
     full_name: activeUser.full_name || "",
-    jurisdiction: "Maharashtra, India",
+    state: (activeUser as any).state || "",
+    city: (activeUser as any).city || "",
+    address: (activeUser as any).address || "",
     language: "English (en)",
   });
 
@@ -50,20 +55,40 @@ export default function ProfilePage() {
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [passwordError, setPasswordError] = useState("");
 
+  // Profile stats from API
+  const [stats, setStats] = useState<ProfileStats>({
+    active_cases: 0,
+    generated_notices: 0,
+    evidence_files: 0,
+    privacy_standard: "AES-256",
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
+
   useEffect(() => {
     fetchProfile().catch(() => {});
   }, [fetchProfile]);
+
+  // Fetch real profile stats
+  useEffect(() => {
+    setStatsLoading(true);
+    api.fetchProfileStats()
+      .then((data) => setStats(data))
+      .catch(() => {})
+      .finally(() => setStatsLoading(false));
+  }, []);
 
   useEffect(() => {
     if (activeUser) {
       setFormData({
         username: activeUser.username || "",
         full_name: activeUser.full_name || "",
-        jurisdiction: "Maharashtra, India",
+        state: (activeUser as any).state || "",
+        city: (activeUser as any).city || "",
+        address: (activeUser as any).address || "",
         language: "English (en)",
       });
     }
-  }, [activeUser.username, activeUser.full_name]);
+  }, [activeUser.username, activeUser.full_name, (activeUser as any).state, (activeUser as any).city, (activeUser as any).address]);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,6 +99,9 @@ export default function ProfilePage() {
       await updateProfile({
         username: formData.username || undefined,
         full_name: formData.full_name || undefined,
+        state: formData.state || undefined,
+        city: formData.city || undefined,
+        address: formData.address || undefined,
       });
       setUpdateSuccess(true);
       setTimeout(() => setUpdateSuccess(false), 3000);
@@ -118,6 +146,14 @@ export default function ProfilePage() {
     ? (activeUser.username.startsWith("@") ? activeUser.username : `@${activeUser.username}`)
     : "@citizen_user";
 
+  // Resolve state label for display
+  const displayState = (() => {
+    const val = (activeUser as any).state;
+    if (!val) return "Not specified";
+    const found = [...INDIAN_STATES, ...UNION_TERRITORIES].find((s) => s.value === val);
+    return found ? found.label : val;
+  })();
+
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-12">
       {/* Top Banner */}
@@ -152,10 +188,10 @@ export default function ProfilePage() {
                 <UserIcon className="size-3.5 text-[#C49B63]" /> {activeUser.email}
               </span>
               <span className="flex items-center gap-1.5">
-                <MapPin className="size-3.5 text-[#C49B63]" /> {formData.jurisdiction}
+                <MapPin className="size-3.5 text-[#C49B63]" /> {displayState}
               </span>
               <span className="flex items-center gap-1.5">
-                <Shield className="size-3.5 text-emerald-400" /> AES-256 Protected
+                <Shield className="size-3.5 text-emerald-400" /> {stats.privacy_standard} Protected
               </span>
             </div>
           </div>
@@ -175,19 +211,23 @@ export default function ProfilePage() {
         <TabsList className="grid w-full grid-cols-3 max-w-md mb-8 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl">
           <TabsTrigger value="overview" className="rounded-lg font-medium text-xs sm:text-sm">Overview</TabsTrigger>
           <TabsTrigger value="edit" className="rounded-lg font-medium text-xs sm:text-sm">Edit Profile</TabsTrigger>
-          <TabsTrigger value="security" className="rounded-lg font-medium text-xs sm:text-sm">Password & Security</TabsTrigger>
+          <TabsTrigger value="security" className="rounded-lg font-medium text-xs sm:text-sm">Password &amp; Security</TabsTrigger>
         </TabsList>
 
         {/* 1. OVERVIEW TAB */}
         <TabsContent value="overview" className="space-y-8 mt-0">
-          {/* Quick Metrics */}
+          {/* Quick Metrics — Synced from API */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="shadow-sm border-slate-200 dark:border-slate-800">
               <CardContent className="p-5 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-slate-500">Active Cases</p>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">2</p>
-                  <p className="text-[11px] text-emerald-600 font-medium mt-0.5">Active analysis</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">
+                    {statsLoading ? "—" : stats.active_cases}
+                  </p>
+                  <p className="text-[11px] text-emerald-600 font-medium mt-0.5">
+                    {stats.active_cases === 1 ? "Active analysis" : "Active analyses"}
+                  </p>
                 </div>
                 <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 text-[#C49B63]">
                   <FolderOpen className="size-6" />
@@ -199,8 +239,12 @@ export default function ProfilePage() {
               <CardContent className="p-5 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-slate-500">Generated Notices</p>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">1 Notice</p>
-                  <p className="text-[11px] text-blue-600 font-medium mt-0.5">Legal notice ready</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">
+                    {statsLoading ? "—" : `${stats.generated_notices} ${stats.generated_notices === 1 ? "Notice" : "Notices"}`}
+                  </p>
+                  <p className="text-[11px] text-blue-600 font-medium mt-0.5">
+                    {stats.generated_notices > 0 ? "Legal notice ready" : "No notices yet"}
+                  </p>
                 </div>
                 <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/30 text-blue-600">
                   <FileText className="size-6" />
@@ -212,7 +256,9 @@ export default function ProfilePage() {
               <CardContent className="p-5 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-slate-500">Evidence Vault</p>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">5 Files</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">
+                    {statsLoading ? "—" : `${stats.evidence_files} ${stats.evidence_files === 1 ? "File" : "Files"}`}
+                  </p>
                   <p className="text-[11px] text-slate-500 mt-0.5">Stored securely</p>
                 </div>
                 <div className="p-3 rounded-xl bg-[#19201D] text-[#C49B63]">
@@ -225,7 +271,7 @@ export default function ProfilePage() {
               <CardContent className="p-5 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-slate-500">Privacy Standard</p>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">AES-256</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{stats.privacy_standard}</p>
                   <p className="text-[11px] text-emerald-600 font-medium mt-0.5">Zero retention</p>
                 </div>
                 <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600">
@@ -258,12 +304,16 @@ export default function ProfilePage() {
                   <span className="font-semibold text-slate-900 dark:text-slate-100">{activeUser.email}</span>
                 </div>
                 <div className="flex justify-between py-2 border-b text-sm">
-                  <span className="text-slate-500">State / Jurisdiction</span>
-                  <span className="font-semibold text-slate-900 dark:text-slate-100">{formData.jurisdiction}</span>
+                  <span className="text-slate-500">State</span>
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">{displayState}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b text-sm">
+                  <span className="text-slate-500">City</span>
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">{(activeUser as any).city || "Not provided"}</span>
                 </div>
                 <div className="flex justify-between py-2 text-sm">
-                  <span className="text-slate-500">Preferred Language</span>
-                  <span className="font-semibold text-slate-900 dark:text-slate-100">{formData.language}</span>
+                  <span className="text-slate-500">Address</span>
+                  <span className="font-semibold text-slate-900 dark:text-slate-100 text-right max-w-[200px] truncate">{(activeUser as any).address || "Not provided"}</span>
                 </div>
               </CardContent>
             </Card>
@@ -310,7 +360,7 @@ export default function ProfilePage() {
           <Card className="shadow-sm max-w-2xl">
             <CardHeader>
               <CardTitle className="text-base font-bold">Edit Profile & Preferences</CardTitle>
-              <CardDescription>Update your username, full name, and jurisdiction settings</CardDescription>
+              <CardDescription>Update your personal details, location, and preferences</CardDescription>
             </CardHeader>
             <CardContent>
               {updateSuccess && (
@@ -321,69 +371,106 @@ export default function ProfilePage() {
               )}
 
               <form onSubmit={handleUpdate} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="page_username" className="font-semibold">Username</Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2.5 text-slate-400 font-mono text-sm">@</span>
+                {/* Identity Section */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                    <UserIcon className="size-3.5 text-[#C49B63]" /> Identity
+                  </h3>
+                  <div className="space-y-2">
+                    <Label htmlFor="page_username" className="font-semibold">Username</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-slate-400 font-mono text-sm">@</span>
+                      <Input 
+                        id="page_username" 
+                        className="pl-7 font-mono text-sm"
+                        placeholder="username"
+                        value={formData.username.replace(/^@/, "")} 
+                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <p className="text-xs text-slate-500">Your handle will display across your dashboard and legal notices.</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="page_full_name" className="font-semibold">Full Name</Label>
                     <Input 
-                      id="page_username" 
-                      className="pl-7 font-mono text-sm"
-                      placeholder="username"
-                      value={formData.username.replace(/^@/, "")} 
-                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                      required
+                      id="page_full_name" 
+                      placeholder="Enter your full name"
+                      value={formData.full_name} 
+                      onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                     />
                   </div>
-                  <p className="text-xs text-slate-500">Your handle will display across your dashboard and legal notices.</p>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="page_email" className="font-semibold">Email Address</Label>
+                    <Input 
+                      id="page_email" 
+                      value={activeUser.email} 
+                      disabled 
+                      className="bg-slate-100 dark:bg-slate-900 text-slate-500 cursor-not-allowed" 
+                    />
+                    <p className="text-xs text-slate-500">Email address cannot be changed directly.</p>
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="page_full_name" className="font-semibold">Full Name</Label>
-                  <Input 
-                    id="page_full_name" 
-                    placeholder="Enter your full name"
-                    value={formData.full_name} 
-                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  />
-                </div>
+                {/* Location Section */}
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                    <MapPin className="size-3.5 text-[#C49B63]" /> Location & Address
+                  </h3>
 
-                <div className="space-y-2">
-                  <Label htmlFor="page_email" className="font-semibold">Email Address</Label>
-                  <Input 
-                    id="page_email" 
-                    value={activeUser.email} 
-                    disabled 
-                    className="bg-slate-100 dark:bg-slate-900 text-slate-500 cursor-not-allowed" 
-                  />
-                  <p className="text-xs text-slate-500">Email address cannot be changed directly.</p>
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="page_state" className="font-semibold">State / Union Territory</Label>
+                    <select 
+                      id="page_state" 
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={formData.state} 
+                      onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                    >
+                      <option value="">Select State or UT</option>
+                      <optgroup label="States (28)">
+                        {INDIAN_STATES.map((st) => (
+                          <option key={st.value} value={st.value}>
+                            {st.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Union Territories (8)">
+                        {UNION_TERRITORIES.map((ut) => (
+                          <option key={ut.value} value={ut.value}>
+                            {ut.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                    </select>
+                  </div>
 
-                <div className="space-y-2 pt-2 border-t">
-                  <Label htmlFor="page_jurisdiction" className="font-semibold flex items-center gap-2">
-                    <MapPin className="size-4 text-[#C49B63]" /> State / Jurisdiction
-                  </Label>
-                  <select 
-                    id="page_jurisdiction" 
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={formData.jurisdiction} 
-                    onChange={(e) => setFormData({ ...formData, jurisdiction: e.target.value })}
-                  >
-                    <option value="">Select State or UT</option>
-                    <optgroup label="States (28)">
-                      {INDIAN_STATES.map((st) => (
-                        <option key={st.value} value={st.label}>
-                          {st.label}
-                        </option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="Union Territories (8)">
-                      {UNION_TERRITORIES.map((ut) => (
-                        <option key={ut.value} value={ut.label}>
-                          {ut.label}
-                        </option>
-                      ))}
-                    </optgroup>
-                  </select>
+                  <div className="space-y-2">
+                    <Label htmlFor="page_city" className="font-semibold flex items-center gap-2">
+                      <Building2 className="size-3.5 text-slate-400" /> City
+                    </Label>
+                    <Input 
+                      id="page_city" 
+                      placeholder="Enter your city"
+                      value={formData.city} 
+                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="page_address" className="font-semibold flex items-center gap-2">
+                      <Home className="size-3.5 text-slate-400" /> Full Address
+                    </Label>
+                    <Textarea 
+                      id="page_address" 
+                      placeholder="Enter your full address (used for legal notices and document generation)"
+                      className="min-h-[80px] resize-none text-sm"
+                      value={formData.address} 
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    />
+                    <p className="text-xs text-slate-500">Your address is used to populate the sender details in generated legal notices.</p>
+                  </div>
                 </div>
 
                 <Button type="submit" className="bg-[#19201D] hover:bg-[#28352F] text-white rounded-xl px-6 py-5 font-semibold gap-2" disabled={isUpdating}>

@@ -11,5 +11,6 @@ from app.models.action_plan import ActionPlan  # noqa: F401
 from app.models.document import Document  # noqa: F401
 from app.models.legal_source import LegalSource  # noqa: F401
 from app.models.evidence_checklist import EvidenceChecklist  # noqa: F401
+from app.models.notification import Notification  # noqa: F401
 
 

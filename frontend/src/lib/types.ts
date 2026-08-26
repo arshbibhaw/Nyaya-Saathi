@@ -13,6 +13,29 @@ export interface UserOut {
   email: string;
   username: string | null;
   full_name: string | null;
+  state?: string | null;
+  city?: string | null;
+  address?: string | null;
+}
+
+// ── Notifications ───────────────────────────────────────────────────────────
+
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: "info" | "success" | "warning";
+  is_read: boolean;
+  created_at: string;
+}
+
+// ── Profile Stats ───────────────────────────────────────────────────────────
+
+export interface ProfileStats {
+  active_cases: number;
+  generated_notices: number;
+  evidence_files: number;
+  privacy_standard: string;
 }
 
 // ── Cases ───────────────────────────────────────────────────────────────────

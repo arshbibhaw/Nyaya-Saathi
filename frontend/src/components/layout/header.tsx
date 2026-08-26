@@ -6,6 +6,7 @@ import { Bell, User as UserIcon } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ProfileSheet } from "@/components/layout/profile-sheet";
+import { NotificationDropdown } from "@/components/layout/notification-dropdown";
 
 export function Header() {
   const { user } = useAuthStore();
@@ -27,12 +28,7 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button 
-            aria-label="Notifications"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white border border-[#EAE5D9] shadow-sm text-slate-500 hover:text-slate-900 transition-colors"
-          >
-            <Bell className="size-5" />
-          </button>
+          <NotificationDropdown />
 
           <Link
             href="/profile"

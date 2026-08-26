@@ -6,6 +6,8 @@ import type {
   EvidenceResponse,
   ActionPlan,
   GeneratedDocument,
+  Notification,
+  ProfileStats,
 } from "@/lib/types";
 
 let activeBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
@@ -34,7 +36,6 @@ export async function getAuthHeaders(): Promise<HeadersInit> {
   if (typeof window === "undefined") {
     return {};
   }
-  
   let token = localStorage.getItem("token");
   
   if (!token) {
@@ -62,6 +63,7 @@ export async function apiClient<T>(
   endpoint: string,
   options: RequestInit = {},
 ): Promise<T> {
+
   const authHeaders = await getAuthHeaders();
   const requestHeaders = {
     "Content-Type": "application/json",
@@ -140,6 +142,9 @@ export async function fetchProfile(): Promise<UserOut> {
 export async function updateProfile(data: {
   username?: string;
   full_name?: string;
+  state?: string;
+  city?: string;
+  address?: string;
 }): Promise<UserOut> {
   return apiClient<UserOut>("/auth/profile", {
     method: "PUT",
@@ -215,7 +220,7 @@ export async function sendChatMessageStream(
 
     buffer += decoder.decode(value, { stream: true });
     const parts = buffer.split("\n\n");
-    
+
     // Process all complete chunks
     for (let i = 0; i < parts.length - 1; i++) {
       const part = parts[i].trim();
@@ -311,4 +316,32 @@ export async function generateDocument(
     method: "POST",
     body: JSON.stringify({ doc_type: docType }),
   });
+}
+
+// ── Notifications ───────────────────────────────────────────────────────────
+
+export async function fetchNotifications(): Promise<Notification[]> {
+  return apiClient<Notification[]>("/notifications");
+}
+
+export async function markNotificationRead(notificationId: string): Promise<Notification> {
+  return apiClient<Notification>(`/notifications/${notificationId}/read`, {
+    method: "PATCH",
+  });
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  return apiClient<void>("/notifications/read-all", {
+    method: "POST",
+  });
+}
+
+export async function fetchUnreadCount(): Promise<{ count: number }> {
+  return apiClient<{ count: number }>("/notifications/unread-count");
+}
+
+// ── Profile Stats ───────────────────────────────────────────────────────────
+
+export async function fetchProfileStats(): Promise<ProfileStats> {
+  return apiClient<ProfileStats>("/profile/stats");
 }
