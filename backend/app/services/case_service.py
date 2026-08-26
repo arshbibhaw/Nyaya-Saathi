@@ -30,8 +30,13 @@ def classify_and_create_case(db: Session, user_id: str, initial_issue: str, loca
     4. Automatically generates the structured Action Plan.
     5. Automatically generates the Draft Document (if applicable).
     """
-    # 1. Advanced Analysis & Classification
-    analysis = analyze_and_classify_legal_matter(initial_issue)
+    # 1. Advanced Analysis & Classification with RAG Context
+    context_chunks = retrieve_relevant_legal_sources(db=db, query=initial_issue, top_k=3)
+    rag_context = "\n".join(
+        f"[Source: {c.get('title', 'Unknown')}]\n{c.get('chunk_text', '')}"
+        for c in context_chunks
+    )
+    analysis = analyze_and_classify_legal_matter(user_input=initial_issue, rag_context=rag_context)
 
     # 2. Persist Case with all spec-required fields
     case = Case(
@@ -130,6 +135,13 @@ def handle_chat(db: Session, case: Case, message: str) -> ChatResponse:
         {"role": q.role, "content": q.question} for q in history
     ]
 
+    # Retrieve legal context for Chat
+    context_chunks = retrieve_relevant_legal_sources(db=db, query=message, domain=case.domain, top_k=3)
+    rag_context = "\n".join(
+        f"[Source: {c.get('title', 'Unknown')}]\n{c.get('chunk_text', '')}"
+        for c in context_chunks
+    )
+
     ai_text, sources, follow_ups = generate_dynamic_chat_response(
         case_domain=case.domain,
         case_issue=case.issue,
@@ -137,6 +149,7 @@ def handle_chat(db: Session, case: Case, message: str) -> ChatResponse:
         case_location=case.location,
         user_message=message,
         conversation_history=history_dicts,
+        rag_context=rag_context,
     )
 
     # Persist assistant turn in DB
@@ -216,7 +229,7 @@ def generate_action_plan_with_llm(db: Session, case: Case) -> ActionPlan:
     if plan:
         return plan
 
-    steps = _llm_generate_action_plan(case)
+    steps = _llm_generate_action_plan(db, case)
 
     plan = ActionPlan(
         case_id=case.id,
@@ -229,38 +242,47 @@ def generate_action_plan_with_llm(db: Session, case: Case) -> ActionPlan:
     return plan
 
 
-def _llm_generate_action_plan(case: Case) -> list[dict]:
+def _llm_generate_action_plan(db: Session, case: Case) -> list[dict]:
     """Call LLM or generate domain-calibrated action plan steps."""
-    api_key = os.getenv("LLM_API_KEY", "") or os.getenv("OPENAI_API_KEY", "")
-    if api_key:
-        try:
-            from openai import OpenAI
-            from app.ai.prompts.templates import ACTION_PLAN_PROMPT
-            client = OpenAI(api_key=api_key, timeout=3.0, max_retries=0)
-            prompt = ACTION_PLAN_PROMPT.format(
-                domain=case.domain or "unknown",
-                issue=case.issue or "unknown",
-                summary=case.description or case.summary or "No summary",
-                evidence_summary="No evidence uploaded yet.",
-            )
-            response = client.chat.completions.create(
-                model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.3,
-            )
-            content = response.choices[0].message.content.strip()
-            start = content.find("[")
-            end = content.rfind("]") + 1
-            if start >= 0 and end > start:
-                steps = json.loads(content[start:end])
-                for s in steps:
-                    s.setdefault("status", "PENDING")
-                return steps
-        except Exception as e:
-            logger.warning("LLM action plan generation failed: %s", e)
+    from app.ai.llm.client import LLMClient
+    from app.ai.prompts.templates import ACTION_PLAN_PROMPT
+    import asyncio
+    
+    context_chunks = retrieve_relevant_legal_sources(db=db, query=case.issue or case.description or "", domain=case.domain, top_k=3)
+    rag_context = "\n".join(
+        f"[Source: {c.get('title', 'Unknown')}]\n{c.get('chunk_text', '')}"
+        for c in context_chunks
+    )
 
-    # Use analysis from classifier
-    analysis = analyze_and_classify_legal_matter(case.description or case.summary or case.issue or "")
+    prompt = ACTION_PLAN_PROMPT.format(
+        domain=case.domain or "unknown",
+        issue=case.issue or "unknown",
+        summary=case.description or case.summary or "No summary",
+        evidence_summary="No evidence uploaded yet.",
+    )
+    prompt += f"\n\nLegal Context from Database:\n{rag_context if rag_context else 'None provided.'}"
+    
+    try:
+        client = LLMClient()
+        response_text = asyncio.run(
+            client.complete(
+                messages=[{"role": "user", "content": prompt}],
+                step="action_plan",
+                case_id=str(case.id)
+            )
+        )
+        start = response_text.find("[")
+        end = response_text.rfind("]") + 1
+        if start >= 0 and end > start:
+            steps = json.loads(response_text[start:end])
+            for s in steps:
+                s.setdefault("status", "PENDING")
+            return steps
+    except Exception as e:
+        logger.warning("LLM action plan generation failed: %s", e)
+
+    # Fallback to analysis from classifier (which now also uses LLM)
+    analysis = analyze_and_classify_legal_matter(case.description or case.summary or case.issue or "", rag_context=rag_context)
     return [
         {"step": 1, "title": "Immediate Preservation", "description": analysis.immediate_preservation_step, "status": "PENDING"},
         {"step": 2, "title": "Communication or Notice", "description": analysis.communication_or_notice_step, "status": "PENDING"},
@@ -274,39 +296,43 @@ def generate_document_with_llm(db: Session, case: Case, doc_type: str = "complai
     """
     Generate a legal document draft using LLM or structured classification.
     """
-    api_key = os.getenv("LLM_API_KEY", "") or os.getenv("OPENAI_API_KEY", "")
+    from app.ai.llm.client import LLMClient
+    from app.ai.prompts.templates import DOCUMENT_DRAFT_PROMPT
+    from app.models.evidence import Evidence
+    import asyncio
+
     content = ""
+    try:
+        context_chunks = retrieve_relevant_legal_sources(db=db, query=case.issue or case.description or "", domain=case.domain, top_k=3)
+        rag_context = "\n".join(
+            f"[Source: {c.get('title', 'Unknown')}]\n{c.get('chunk_text', '')}"
+            for c in context_chunks
+        )
+        
+        evidence_items = db.query(Evidence).filter(Evidence.case_id == case.id).all()
+        evidence_summary = "\n".join(
+            f"- {e.file_name}: {(e.extracted_text or '')[:200]}" for e in evidence_items
+        ) if evidence_items else "No evidence uploaded yet."
 
-    if api_key:
-        try:
-            from openai import OpenAI
-            from app.ai.prompts.templates import DOCUMENT_DRAFT_PROMPT
-            from app.models.evidence import Evidence
-            client = OpenAI(api_key=api_key, timeout=3.0, max_retries=0)
+        prompt = DOCUMENT_DRAFT_PROMPT.format(
+            doc_type=doc_type,
+            domain=case.domain or "unknown",
+            issue=case.issue or "unknown",
+            summary=case.description or case.summary or "No summary",
+            evidence_summary=evidence_summary,
+        )
+        prompt += f"\n\nLegal Context from Database:\n{rag_context if rag_context else 'None provided.'}"
 
-            evidence_items = db.query(Evidence).filter(Evidence.case_id == case.id).all()
-            evidence_summary = "\n".join(
-                f"- {e.file_name}: {(e.extracted_text or '')[:200]}" for e in evidence_items
-            ) if evidence_items else "No evidence uploaded yet."
-
-            prompt = DOCUMENT_DRAFT_PROMPT.format(
-                doc_type=doc_type,
-                domain=case.domain or "unknown",
-                issue=case.issue or "unknown",
-                summary=case.description or case.summary or "No summary",
-                evidence_summary=evidence_summary,
-            )
-
-            response = client.chat.completions.create(
-                model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
+        client = LLMClient()
+        content = asyncio.run(
+            client.complete(
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.3,
+                step="document_draft",
+                case_id=str(case.id)
             )
-            content = response.choices[0].message.content
-        except Exception as e:
-            logger.warning("LLM document generation failed: %s", e)
-            content = _fallback_document(case, doc_type)
-    else:
+        )
+    except Exception as e:
+        logger.warning("LLM document generation failed: %s", e)
         content = _fallback_document(case, doc_type)
 
     doc = Document(

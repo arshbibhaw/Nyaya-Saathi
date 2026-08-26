@@ -5,6 +5,7 @@ Versioned prompt template for generating step-by-step action plans.
 """
 
 from app.ai.config import PROMPT_VERSIONS
+from app.ai.prompts.statutory_reasoning import STATUTORY_REASONING_CHAT
 
 PROMPT_VERSION = PROMPT_VERSIONS["action_plan"]
 
@@ -13,6 +14,8 @@ You are an action-plan generator for Nyaya Saathi, an Indian legal navigation pl
 
 Given a citizen's case details, legal analysis, and evidence summary, generate a \
 personalised, step-by-step action plan.
+
+""" + STATUTORY_REASONING_CHAT + """
 
 ## Rules
 1. Each step must be actionable and specific.

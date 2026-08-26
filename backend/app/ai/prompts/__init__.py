@@ -9,6 +9,10 @@ from app.ai.prompts.evidence import format_evidence_prompt
 from app.ai.prompts.generate import format_generate_prompt
 from app.ai.prompts.questions import format_questions_prompt
 from app.ai.prompts.safety import format_safety_prompt
+from app.ai.prompts.statutory_reasoning import (
+    STATUTORY_REASONING_FRAMEWORK,
+    STATUTORY_REASONING_CHAT,
+)
 
 __all__ = [
     "format_action_plan_prompt",
@@ -18,4 +22,6 @@ __all__ = [
     "format_generate_prompt",
     "format_questions_prompt",
     "format_safety_prompt",
+    "STATUTORY_REASONING_FRAMEWORK",
+    "STATUTORY_REASONING_CHAT",
 ]

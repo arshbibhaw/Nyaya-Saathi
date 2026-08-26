@@ -99,7 +99,12 @@ async def upload_evidence(
             extracted_entities = result["parsed"]
         except Exception as e:
             # Fallback if extraction fails
-            print(f"Entity extraction failed: {e}")
+            import logging
+            logging.getLogger(__name__).error(f"Entity extraction failed: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to analyze evidence document: {str(e)}"
+            )
 
     # Persist
     evidence = Evidence(
