@@ -92,7 +92,11 @@ export default function LandingPage() {
   }, [mobileMenuOpen]);
 
   return (
+<<<<<<< Updated upstream
     <div className="relative min-h-screen bg-[#FCFCFD] text-[#0F172A] selection:bg-slate-900 selection:text-white overflow-x-hidden font-sans">
+=======
+    <div className="relative min-h-screen bg-[#FCFCFD] text-[#0F172A] selection:bg-slate-900 selection:text-white font-sans">
+>>>>>>> Stashed changes
       
       {/* 1) Fixed Full-Width Header with Glassmorphism */}
       <header className="fixed top-0 left-0 right-0 w-full z-50 bg-[#FCFCFD]/80 backdrop-blur-md border-b border-slate-200/50 transition-all duration-200">

@@ -22,12 +22,14 @@ def generate_dynamic_chat_response(
     case_location: Optional[str],
     user_message: str,
     conversation_history: Optional[List[Dict[str, str]]] = None,
+    rag_context: str = "",
 ) -> Tuple[str, List[Dict[str, str]], List[str]]:
     """
     Generates a context-aware dynamic legal guidance response.
     Returns: (response_text, sources_list, follow_up_questions)
     """
-    global _INVALID_OPENAI_KEYS
+    from app.ai.llm.client import LLMClient
+    import asyncio
 
     user_msg_clean = user_message.strip()
     msg_lower = user_msg_clean.lower()
@@ -36,71 +38,52 @@ def generate_dynamic_chat_response(
     desc_clean = case_description or issue_clean
     location_clean = case_location or "India"
 
-    # Extract dynamic amount from case context or message
     amount_match = re.search(r'(?:₹|rs\.?|inr)?\s*(\d{1,3}(?:,\d{2,3})+|\d{3,9})', f"{desc_clean} {issue_clean} {user_msg_clean}", re.IGNORECASE)
     amount_str = f"₹{amount_match.group(1)}" if amount_match else "the disputed claim"
 
-    # 1. Try Live LLM (OpenAI / OpenRouter / Custom LLM API Key)
-    api_key = os.getenv("LLM_API_KEY", "") or os.getenv("OPENAI_API_KEY", "")
-    if api_key and not api_key.startswith("sk-proj-dummy") and api_key not in _INVALID_OPENAI_KEYS:
-        try:
-            from openai import OpenAI
-            client = OpenAI(api_key=api_key, timeout=2.5, max_retries=0)
-            system_prompt = (
-                f"You are Nyaya Saathi, an elite AI Indian Legal Navigator and Pair Counsel for citizens.\n"
-                f"Active Case Dossier:\n"
-                f"- Legal Domain: {domain_clean}\n"
-                f"- Core Issue: {issue_clean}\n"
-                f"- Disputed Amount / Claim: {amount_str}\n"
-                f"- Incident Facts: {desc_clean}\n"
-                f"- Jurisdiction / State: {location_clean}\n\n"
-                f"Guidance Guidelines:\n"
-                f"1. Directly, empathetically, and precisely answer the citizen's specific query.\n"
-                f"2. Cite governing Indian statutes (e.g. Model Tenancy Act, Consumer Protection Act 2019, Bharatiya Nagarik Suraksha Sanhita 2023, Bharatiya Sakshya Adhiniyam 2023, IT Act, Payment of Wages Act, MV Act).\n"
-                f"3. State exact actionable steps, evidence requirements, and limitation timelines.\n"
-                f"4. Be conversational, natural, and highly structured (use bold headers and bullet points)."
-            )
-            chat_messages = [{"role": "system", "content": system_prompt}]
-            if conversation_history:
-                for h in conversation_history[-4:]:
-                    chat_messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
-            chat_messages.append({"role": "user", "content": user_msg_clean})
+    from app.ai.prompts.statutory_reasoning import STATUTORY_REASONING_CHAT
 
-            resp = client.chat.completions.create(
-                model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
-                messages=chat_messages,
-                temperature=0.3,
-                max_tokens=700,
-            )
-            content = resp.choices[0].message.content.strip()
-            if content and len(content) > 30:
-                sources = _derive_sources_for_domain(domain_clean, msg_lower)
-                follow_ups = _derive_follow_ups(domain_clean, msg_lower)
-                return content, sources, follow_ups
-        except Exception as e:
-            err_msg = str(e)
-            if "invalid_api_key" in err_msg or "401" in err_msg or "Incorrect API key" in err_msg:
-                _INVALID_OPENAI_KEYS.add(api_key)
-            logger.warning("OpenAI API call bypassed: %s", e)
+    system_prompt = (
+        f"You are Nyaya Saathi, an elite AI Indian Legal Navigator and Pair Counsel for citizens.\n"
+        f"Active Case Dossier:\n"
+        f"- Legal Domain: {domain_clean}\n"
+        f"- Core Issue: {issue_clean}\n"
+        f"- Disputed Amount / Claim: {amount_str}\n"
+        f"- Incident Facts: {desc_clean}\n"
+        f"- Jurisdiction / State: {location_clean}\n\n"
+        f"{STATUTORY_REASONING_CHAT}\n\n"
+        f"RESPONSE GUIDELINES:\n"
+        f"1. Directly, empathetically, and precisely answer the citizen's specific query.\n"
+        f"2. Cite ONLY statutes that are directly relevant to the facts above.\n"
+        f"3. State exact actionable steps, evidence requirements, and limitation timelines.\n"
+        f"4. Be conversational, natural, and highly structured (use bold headers and bullet points).\n"
+        f"5. If the legal context from the database is provided below, ground your answer in it.\n\n"
+        f"Legal Context from Database:\n{rag_context if rag_context else 'None provided.'}"
+    )
 
-    # 2. Try Pollinations AI free inference
+    chat_messages = [{"role": "system", "content": system_prompt}]
+    if conversation_history:
+        for h in conversation_history[-4:]:
+            chat_messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
+    chat_messages.append({"role": "user", "content": user_msg_clean})
+
     try:
-        from app.ai.llm.pollinations import call_pollinations_ai
-        poll_system = (
-            f"You are Nyaya Saathi, an expert Indian Legal AI. "
-            f"Case Domain: {domain_clean}. Jurisdiction: {location_clean}. "
-            f"Claim: {amount_str}. Facts: {desc_clean}. "
-            f"Directly and clearly answer the citizen's specific query under Indian statutory law."
+        client = LLMClient()
+        response_data = asyncio.run(
+            client.complete(
+                messages=chat_messages,
+                step="chat_response"
+            )
         )
-        poll_resp = call_pollinations_ai(prompt=user_msg_clean, system_prompt=poll_system, timeout=1.0)
-        if poll_resp and len(poll_resp) > 40 and not poll_resp.startswith("{") and "Payment Required" not in poll_resp:
+        content = response_data["content"].strip()
+        if content and len(content) > 30:
             sources = _derive_sources_for_domain(domain_clean, msg_lower)
             follow_ups = _derive_follow_ups(domain_clean, msg_lower)
-            return poll_resp, sources, follow_ups
-    except Exception:
-        pass
+            return content, sources, follow_ups
+    except Exception as e:
+        logger.warning("LLMClient chat generation failed: %s", e)
 
-    # 3. Dynamic Statutory Intelligence Engine
+    # Dynamic Statutory Intelligence Engine (Fallback)
     response_text = _synthesize_intent_response(
         domain=domain_clean,
         issue=issue_clean,

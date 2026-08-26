@@ -53,12 +53,11 @@ def generate_response(
     messages.append({"role": "user", "content": query})
     
     try:
-        response = client.chat.completions.create(
-            model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
+        response_data = asyncio.run(client.complete(
             messages=messages,
-            temperature=0.3,
-        )
-        return response.choices[0].message.content
+            step="rag_generation"
+        ))
+        return response_data["content"]
     except Exception as e:
         return f"I encountered an error while trying to process your request: {e}"
 
