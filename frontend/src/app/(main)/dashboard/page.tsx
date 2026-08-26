@@ -92,7 +92,7 @@ export default function DashboardPage() {
             </Button>
           </Link>
           <Link href="/cases/new">
-            <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
+            <Button variant="outline" className="bg-transparent border-white/20 text-white hover:bg-white/10 hover:text-white">
               <FolderOpen className="mr-2 size-4" /> Start New Case
             </Button>
           </Link>
