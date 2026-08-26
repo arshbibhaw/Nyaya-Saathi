@@ -13,12 +13,6 @@ class UserCreate(BaseModel):
     full_name: str | None = None
 
 
-class UserUpdate(BaseModel):
-    """Payload for PUT /auth/profile."""
-    username: str | None = None
-    full_name: str | None = None
-
-
 class UserLogin(BaseModel):
     """Payload for POST /auth/login."""
     email: EmailStr
@@ -26,7 +20,8 @@ class UserLogin(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    """Payload for PATCH /users/me."""
+    """Payload for PUT /auth/profile."""
+    username: str | None = None
     full_name: str | None = None
     preferred_language: str | None = None
     location: str | None = None

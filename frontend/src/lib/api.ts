@@ -8,11 +8,19 @@ import type {
   GeneratedDocument,
 } from "@/lib/types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+let activeBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+
+const candidateBases = [
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1",
+  "http://localhost:8000/api/v1",
+  "http://127.0.0.1:8000/api/v1",
+  "http://localhost:8002/api/v1",
+  "http://127.0.0.1:8002/api/v1",
+];
 
 // ── Generic Fetch Wrapper ───────────────────────────────────────────────────
 
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
@@ -22,38 +30,72 @@ class ApiError extends Error {
   }
 }
 
-async function getAuthHeaders(): Promise<HeadersInit> {
+export async function getAuthHeaders(): Promise<HeadersInit> {
   if (typeof window === "undefined") {
     return {};
   }
+  let token = localStorage.getItem("token");
+  
+  if (!token) {
+    try {
+      const { getSession } = await import("next-auth/react");
+      const session = await getSession();
+      if ((session as any)?.accessToken) {
+        token = (session as any).accessToken as string;
+      }
+    } catch {
+      // Ignore if next-auth is not available
+    }
+  }
 
-  const token = localStorage.getItem("token");
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  if (token) {
+    return {
+      Authorization: `Bearer ${token}`,
+    };
+  }
+
+  return {};
 }
 
-async function apiClient<T>(
+export async function apiClient<T>(
   endpoint: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const url = `${API_BASE}${endpoint}`;
 
   const authHeaders = await getAuthHeaders();
+  const requestHeaders = {
+    "Content-Type": "application/json",
+    ...authHeaders,
+    ...options.headers,
+  };
 
-  let res: Response;
-  try {
-    res = await fetch(url, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-        ...options.headers,
-      },
-    });
-  } catch (err) {
-    if (err instanceof TypeError && err.message === "Failed to fetch") {
-      throw new Error("Unable to connect to the server. Is the backend running on port 8000?");
+  // Try current activeBaseUrl first
+  const searchBases = Array.from(new Set([activeBaseUrl, ...candidateBases]));
+
+  let res: Response | null = null;
+  let lastError: any = null;
+
+  for (const base of searchBases) {
+    try {
+      const url = `${base}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+      res = await fetch(url, {
+        ...options,
+        headers: requestHeaders,
+      });
+      if (res.ok || (res.status >= 400 && res.status < 500)) {
+        activeBaseUrl = base; // Cache the responsive base URL
+        break;
+      }
+    } catch (err) {
+      lastError = err;
+      continue;
     }
-    throw err;
+  }
+
+  if (!res) {
+    throw new Error(
+      `Unable to connect to the backend server. Please verify the backend FastAPI server is running on port 8000.`
+    );
   }
 
   if (!res.ok) {
@@ -64,7 +106,7 @@ async function apiClient<T>(
     );
   }
 
-  return res.json() as Promise<T>;
+  return (await res.json()) as T;
 }
 
 // ── Auth ────────────────────────────────────────────────────────────────────
@@ -111,10 +153,10 @@ export async function fetchCases(): Promise<Case[]> {
   return apiClient<Case[]>("/cases/");
 }
 
-export async function createCase(initial_issue: string): Promise<Case> {
+export async function createCase(initial_issue: string, location?: string): Promise<Case> {
   return apiClient<Case>("/cases/", {
     method: "POST",
-    body: JSON.stringify({ initial_issue }),
+    body: JSON.stringify({ initial_issue, location }),
   });
 }
 
@@ -134,13 +176,17 @@ export async function sendChatMessage(
   });
 }
 
+export async function getMessages(caseId: string): Promise<{ id: string; role: string; content: string; timestamp: string }[]> {
+  return apiClient<{ id: string; role: string; content: string; timestamp: string }[]>(`/cases/${caseId}/messages`);
+}
+
 export async function sendChatMessageStream(
   caseId: string,
   message: string,
   onChunk: (chunk: string) => void,
   onSources: (sources: { act: string; section: string; text?: string }[]) => void,
 ): Promise<void> {
-  const url = `${API_BASE}/cases/${caseId}/chat`;
+  const url = `${activeBaseUrl}/cases/${caseId}/chat/stream`;
   const authHeaders = await getAuthHeaders();
 
   const res = await fetch(url, {
@@ -177,7 +223,6 @@ export async function sendChatMessageStream(
         try {
           const data = JSON.parse(part.substring(6));
           if (data.type === "sources") {
-            // Map backend sources to frontend Citation type
             const mappedSources = data.sources.map((s: { title?: string; source_url?: string }) => ({
               act: s.title || "Reference",
               section: "",
@@ -192,7 +237,6 @@ export async function sendChatMessageStream(
         }
       }
     }
-    // Keep the incomplete part in the buffer
     buffer = parts[parts.length - 1];
   }
 }
@@ -208,22 +252,39 @@ export async function uploadEvidence(
 
   const authHeaders = await getAuthHeaders();
 
-  const url = `${API_BASE}/cases/${caseId}/evidence`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: authHeaders,
-    body: formData, // No Content-Type header — browser sets multipart boundary
-  });
+  const searchBases = Array.from(new Set([activeBaseUrl, ...candidateBases]));
+  let res: Response | null = null;
 
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
+  for (const base of searchBases) {
+    try {
+      const url = `${base}/cases/${caseId}/evidence`;
+      res = await fetch(url, {
+        method: "POST",
+        headers: authHeaders,
+        body: formData,
+      });
+      if (res.ok) {
+        activeBaseUrl = base;
+        break;
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  if (!res || !res.ok) {
+    const body = await res?.json().catch(() => ({}));
     throw new ApiError(
-      res.status,
-      body.detail ?? "Evidence upload failed",
+      res?.status || 500,
+      body?.detail ?? "Evidence upload failed",
     );
   }
 
   return res.json() as Promise<EvidenceResponse>;
+}
+
+export async function listEvidence(caseId: string): Promise<EvidenceResponse[]> {
+  return apiClient<EvidenceResponse[]>(`/cases/${caseId}/evidence`);
 }
 
 // ── Action Plan ─────────────────────────────────────────────────────────────
@@ -238,11 +299,15 @@ export async function getDocument(caseId: string): Promise<GeneratedDocument> {
   return apiClient<GeneratedDocument>(`/cases/${caseId}/document`);
 }
 
+export async function listDocuments(caseId: string): Promise<GeneratedDocument[]> {
+  return apiClient<GeneratedDocument[]>(`/cases/${caseId}/documents`);
+}
+
 export async function generateDocument(
   caseId: string,
   docType: string,
 ): Promise<GeneratedDocument> {
-  return apiClient<GeneratedDocument>(`/cases/${caseId}/document`, {
+  return apiClient<GeneratedDocument>(`/cases/${caseId}/documents/generate`, {
     method: "POST",
     body: JSON.stringify({ doc_type: docType }),
   });

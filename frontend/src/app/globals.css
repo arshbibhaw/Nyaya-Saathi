@@ -270,3 +270,16 @@
 .animation-delay-4000 {
   animation-delay: 4s;
 }
+
+/* Hide Next.js Development Indicator / Logo Badge */
+nextjs-portal,
+#nextjs-dev-indicator,
+[data-nextjs-dev-indicator],
+[data-nextjs-toast],
+div[data-nextjs-toast],
+div[data-nextjs-dev-indicator] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

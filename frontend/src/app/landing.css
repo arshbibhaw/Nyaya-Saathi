@@ -1,0 +1,260 @@
+.hero-viewport {
+  position: relative;
+  background-color: #FCFCFD;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  min-height: 90vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: clamp(96px, 14vh, 130px);
+  padding-bottom: clamp(48px, 6vh, 64px);
+  padding-left: clamp(16px, 3.5vw, 36px);
+  padding-right: clamp(16px, 3.5vw, 36px);
+  overflow: hidden;
+}
+
+/* Subtle dot-grid pattern with radial fade for delicate depth */
+.hero-dot-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(15, 23, 42, 0.08) 1.25px, transparent 1.25px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(ellipse 65% 55% at 50% 45%, #000 35%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 65% 55% at 50% 45%, #000 35%, transparent 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Subtle warm background radial ambiance */
+.hero-ambient-glow {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(1000px, 95vw);
+  height: min(600px, 85vh);
+  background: radial-gradient(ellipse at center, rgba(224, 231, 255, 0.38) 0%, rgba(254, 240, 138, 0.26) 45%, rgba(254, 205, 211, 0.22) 70%, transparent 85%);
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 50%;
+  filter: blur(80px);
+}
+
+/* Subtle Ambient Mesh Canvas for sections below Hero */
+.subtle-mesh-canvas {
+  background-color: #FCFCFD;
+  background-image: 
+    radial-gradient(ellipse 65% 45% at 0% 15%, rgba(254, 205, 211, 0.28), transparent 55%),
+    radial-gradient(ellipse 65% 45% at 100% 15%, rgba(254, 240, 138, 0.24), transparent 55%),
+    radial-gradient(ellipse 55% 40% at 50% 50%, rgba(224, 231, 255, 0.22), transparent 50%),
+    radial-gradient(ellipse 65% 45% at 0% 85%, rgba(255, 228, 230, 0.25), transparent 55%),
+    radial-gradient(ellipse 65% 45% at 100% 85%, rgba(254, 243, 199, 0.25), transparent 55%);
+  background-attachment: local;
+}
+
+.hero-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  max-width: 880px;
+  width: 100%;
+  z-index: 10;
+  position: relative;
+  padding: 48px 16px 24px;
+}
+
+.hero-headline {
+  font-family: inherit;
+  color: #0F172A;
+  font-size: clamp(36px, 6.8vw, 76px);
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  font-weight: 700;
+  margin: 0 0 20px 0;
+}
+
+.hero-subhead {
+  max-width: min(580px, 92%);
+  font-size: clamp(16px, 1.8vw, 20px);
+  color: #475569;
+  line-height: 1.6;
+  font-weight: 400;
+  margin: 0 auto 36px auto;
+}
+
+.hero-cta {
+  background: #0F172A;
+  color: #ffffff;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: clamp(14.5px, 1.5vw, 16px);
+  padding: 15px 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15), 0 2px 4px rgba(15, 23, 42, 0.06);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: -0.01em;
+}
+.hero-cta:hover {
+  background: #1E293B;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2), 0 4px 8px rgba(15, 23, 42, 0.08);
+}
+.hero-cta:active {
+  transform: translateY(0);
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.anim-header { animation: slideDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.mobile-only { display: none; }
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.62);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 40;
+}
+.mobile-menu-sheet {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 16px;
+  width: 250px;
+  background: #fff;
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  z-index: 50;
+  flex-direction: column;
+  transform-origin: top right;
+}
+.mobile-menu-sheet .pill-sign-in {
+  width: 100%;
+  margin-top: 16px;
+}
+.mobile-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mobile-link {
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--nav-text);
+  padding: 12px 16px;
+  text-decoration: none;
+  border-radius: 12px;
+  transition: background-color 0.2s ease;
+}
+.mobile-link:hover, .mobile-link.active {
+  background-color: #F1ECE2;
+}
+.burger {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #28282a;
+  border: none;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  z-index: 51;
+  transition: background 0.3s;
+}
+.burger-bars {
+  width: 18px;
+  height: 12px;
+  position: relative;
+}
+.bar {
+  position: absolute;
+  left: 0;
+  width: 18px;
+  height: 1.5px;
+  background: #fff;
+  transition: all 0.3s ease;
+}
+.bar.top { top: 0; }
+.bar.mid { top: 50%; transform: translateY(-50%); }
+.bar.bot { bottom: 0; }
+
+.menu-open .burger {
+  background: #fff;
+}
+.menu-open .bar {
+  background: #000;
+}
+.menu-open .bar.top {
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+}
+.menu-open .bar.mid {
+  opacity: 0;
+}
+.menu-open .bar.bot {
+  bottom: 50%;
+  transform: translateY(50%) rotate(-45deg);
+}
+.menu-open .mobile-overlay {
+  display: block;
+  animation: overlayIn 0.28s forwards;
+}
+.menu-open .mobile-menu-sheet {
+  display: flex;
+  animation: menuIn 0.38s forwards;
+}
+
+@media (max-width: 720px) {
+  .hero-header {
+    justify-content: space-between;
+  }
+  .desktop-nav, .desktop-only { display: none; }
+  .mobile-only { display: grid; }
+  
+  .hero-headline {
+    letter-spacing: -0.08em;
+    line-height: 1.05;
+  }
+  .hero-stats-footer {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px 16px;
+  }
+  .hero-main {
+    margin-bottom: 2vh;
+  }
+}
+@media (max-width: 420px) {
+  .hero-headline {
+    letter-spacing: -0.09em;
+    line-height: 1.04;
+  }
+  .trust-pill { font-size: 12px; }
+}

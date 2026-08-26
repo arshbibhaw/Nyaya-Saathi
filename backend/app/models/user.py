@@ -33,4 +33,3 @@ class User(Base):
 
     # Relationships
     cases = relationship("Case", back_populates="user", cascade="all, delete-orphan")
-    escalations = relationship("Escalation", back_populates="user", cascade="all, delete-orphan")

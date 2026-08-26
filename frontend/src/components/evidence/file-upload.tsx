@@ -47,7 +47,6 @@ export function FileUpload({ caseId, onUploadSuccess }: FileUploadProps) {
       "image/jpeg": [".jpg", ".jpeg"],
       "image/webp": [".webp"],
     },
-    maxFiles: 1,
     maxSize: 10 * 1024 * 1024, // 10MB
   });
 
@@ -169,8 +168,8 @@ export function FileUpload({ caseId, onUploadSuccess }: FileUploadProps) {
             <div>
               <span className="font-medium text-foreground">Extracted Dates:</span>
               <div className="mt-1 flex flex-wrap gap-1">
-                {result.extracted_entities.dates.length > 0 ? (
-                  result.extracted_entities.dates.map((d, i) => (
+                {(result.extracted_entities?.dates || []).length > 0 ? (
+                  result.extracted_entities?.dates?.map((d, i) => (
                     <span key={i} className="rounded bg-background/50 px-2 py-0.5 text-xs border border-border/50">{d}</span>
                   ))
                 ) : <span className="text-muted-foreground text-xs">None found</span>}
@@ -180,8 +179,8 @@ export function FileUpload({ caseId, onUploadSuccess }: FileUploadProps) {
             <div>
               <span className="font-medium text-foreground">Extracted Amounts:</span>
               <div className="mt-1 flex flex-wrap gap-1">
-                {result.extracted_entities.amounts.length > 0 ? (
-                  result.extracted_entities.amounts.map((a, i) => (
+                {(result.extracted_entities?.amounts || []).length > 0 ? (
+                  result.extracted_entities?.amounts?.map((a, i) => (
                     <span key={i} className="rounded bg-background/50 px-2 py-0.5 text-xs border border-border/50">{a}</span>
                   ))
                 ) : <span className="text-muted-foreground text-xs">None found</span>}
@@ -191,8 +190,8 @@ export function FileUpload({ caseId, onUploadSuccess }: FileUploadProps) {
             <div>
               <span className="font-medium text-foreground">Parties Identified:</span>
               <div className="mt-1 flex flex-wrap gap-1">
-                {result.extracted_entities.parties.length > 0 ? (
-                  result.extracted_entities.parties.map((p, i) => (
+                {(result.extracted_entities?.parties || []).length > 0 ? (
+                  result.extracted_entities?.parties?.map((p, i) => (
                     <span key={i} className="rounded bg-background/50 px-2 py-0.5 text-xs border border-border/50">{p}</span>
                   ))
                 ) : <span className="text-muted-foreground text-xs">None found</span>}

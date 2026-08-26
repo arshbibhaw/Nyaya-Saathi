@@ -42,6 +42,5 @@ class Case(Base):
     evidence = relationship("Evidence", back_populates="case", cascade="all, delete-orphan")
     action_plans = relationship("ActionPlan", back_populates="case", cascade="all, delete-orphan")
     documents = relationship("Document", back_populates="case", cascade="all, delete-orphan")
-    escalations = relationship("Escalation", back_populates="case", cascade="all, delete-orphan")
     evidence_checklist = relationship("EvidenceChecklist", back_populates="case", cascade="all, delete-orphan")
 
