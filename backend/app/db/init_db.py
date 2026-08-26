@@ -49,6 +49,7 @@ def init_db() -> None:
         ("cases", "status", "VARCHAR(50) DEFAULT 'ACTIVE'"),
         ("cases", "created_at", "TIMESTAMP"),
         ("cases", "updated_at", "TIMESTAMP"),
+        ("cases", "relevant_laws", "TEXT"),
     ]
     with engine.connect() as conn:
         for tbl, col, ctype in columns_to_add:

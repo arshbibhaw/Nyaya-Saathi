@@ -51,6 +51,7 @@ export interface Case {
   location?: string;
   status: CaseStatus | string;
   summary?: string;
+  relevant_laws?: string;
   timeline?: { event: string; time: string; [key: string]: unknown }[];
   created_at: string;
   updated_at?: string;
