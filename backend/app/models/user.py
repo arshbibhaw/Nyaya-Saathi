@@ -22,6 +22,9 @@ class User(Base):
     role: Mapped[str] = mapped_column(String(20), default="user")  # "user" | "admin"
     preferred_language: Mapped[str | None] = mapped_column(String(50), nullable=True, default="en")
     location: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    state: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    city: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    address: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

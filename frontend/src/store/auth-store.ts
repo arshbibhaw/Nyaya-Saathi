@@ -19,7 +19,7 @@ interface AuthState {
     full_name: string,
   ) => Promise<void>;
   fetchProfile: () => Promise<void>;
-  updateProfile: (data: { username?: string; full_name?: string }) => Promise<void>;
+  updateProfile: (data: { username?: string; full_name?: string; state?: string; city?: string; address?: string }) => Promise<void>;
   logout: () => void;
   clearError: () => void;
   setHasHydrated: (state: boolean) => void;

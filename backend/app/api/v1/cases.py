@@ -30,6 +30,19 @@ def create_case(
     """Create a new case from a natural-language issue description."""
     try:
         case = classify_and_create_case(db, user.id, payload.initial_issue, location=payload.location)
+
+        # Auto-generate notification
+        try:
+            from app.api.v1.notifications import create_notification
+            create_notification(
+                db, user.id,
+                title="New Case Created",
+                message=f"Your case '{case.title or case.domain or 'Legal Matter'}' has been created and is being analyzed.",
+                notif_type="success",
+            )
+        except Exception:
+            pass  # Non-critical
+
         return case
     except Exception as e:
         import traceback

@@ -25,6 +25,9 @@ class UserUpdate(BaseModel):
     full_name: str | None = None
     preferred_language: str | None = None
     location: str | None = None
+    state: str | None = None
+    city: str | None = None
+    address: str | None = None
 
 
 class UserResponse(BaseModel):
@@ -36,6 +39,9 @@ class UserResponse(BaseModel):
     role: str = "user"
     preferred_language: str | None = None
     location: str | None = None
+    state: str | None = None
+    city: str | None = None
+    address: str | None = None
     created_at: datetime | None = None
 
     model_config = {"from_attributes": True}
