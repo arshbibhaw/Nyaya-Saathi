@@ -4,7 +4,7 @@ Aggregate all v1 sub-routers into a single router mounted at /api/v1.
 
 from fastapi import APIRouter
 
-from app.api.v1 import auth, cases, evidence, plans, documents
+from app.api.v1 import auth, cases, evidence, plans, documents, notifications
 
 router = APIRouter(prefix="/api/v1")
 
@@ -13,4 +13,5 @@ router.include_router(cases.router)
 router.include_router(evidence.router)
 router.include_router(plans.router)
 router.include_router(documents.router)
+router.include_router(notifications.router)
 

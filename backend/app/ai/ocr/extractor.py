@@ -65,9 +65,13 @@ def extract_text_tesseract(image_bytes: bytes) -> str:
     Used as a fallback when PyMuPDF returns no text (scanned PDFs)
     or when the upload is a screenshot / photo.
     """
-    image = Image.open(io.BytesIO(image_bytes))
-    text: str = pytesseract.image_to_string(image)
-    return text.strip()
+    try:
+        image = Image.open(io.BytesIO(image_bytes))
+        text: str = pytesseract.image_to_string(image)
+        return text.strip()
+    except Exception as e:
+        logger.error(f"Tesseract OCR failed: {e}")
+        return ""
 
 
 def _ocr_pdf_pages(file_bytes: bytes) -> str:
@@ -76,17 +80,21 @@ def _ocr_pdf_pages(file_bytes: bytes) -> str:
 
     Used when PyMuPDF text extraction fails (scanned / image-based PDFs).
     """
-    doc = pymupdf.open(stream=file_bytes, filetype="pdf")
-    pages: list[str] = []
-    for page in doc:
-        # Render at 2x zoom for better OCR accuracy
-        pix = page.get_pixmap(dpi=300)
-        img_bytes = pix.tobytes("png")
-        text = extract_text_tesseract(img_bytes)
-        if text:
-            pages.append(text)
-    doc.close()
-    return "\n\n".join(pages)
+    try:
+        doc = pymupdf.open(stream=file_bytes, filetype="pdf")
+        pages: list[str] = []
+        for page in doc:
+            # Render at 2x zoom for better OCR accuracy
+            pix = page.get_pixmap(dpi=300)
+            img_bytes = pix.tobytes("png")
+            text = extract_text_tesseract(img_bytes)
+            if text:
+                pages.append(text)
+        doc.close()
+        return "\n\n".join(pages)
+    except Exception as e:
+        logger.error(f"Failed to OCR PDF pages: {e}")
+        return ""
 
 
 def extract_text(file_bytes: bytes, mime_type: str) -> Optional[str]:

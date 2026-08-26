@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     # --- AI / LLM (unified key) ---
     LLM_API_KEY: str = os.getenv("LLM_API_KEY", "")
     OPENAI_API_KEY: str = os.getenv("LLM_API_KEY", "")  # alias for embedder compat
+    GEMINI_API_KEY: str = ""
     LLM_MODEL: str = os.getenv("LLM_MODEL", "gpt-4o")
     EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
     EMBEDDING_DIMENSIONS: int = 1536

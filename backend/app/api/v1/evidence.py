@@ -99,7 +99,12 @@ async def upload_evidence(
             extracted_entities = result["parsed"]
         except Exception as e:
             # Fallback if extraction fails
-            print(f"Entity extraction failed: {e}")
+            import logging
+            logging.getLogger(__name__).error(f"Entity extraction failed: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to analyze evidence document: {str(e)}"
+            )
 
     # Persist
     evidence = Evidence(
@@ -113,6 +118,18 @@ async def upload_evidence(
     db.add(evidence)
     db.commit()
     db.refresh(evidence)
+
+    # Auto-generate notification
+    try:
+        from app.api.v1.notifications import create_notification
+        create_notification(
+            db, user.id,
+            title="Evidence Uploaded",
+            message=f"'{file.filename}' has been uploaded and processed for case analysis.",
+            notif_type="success",
+        )
+    except Exception:
+        pass  # Non-critical
 
     return EvidenceResponse(
         id=evidence.id,

@@ -88,6 +88,15 @@ def update_profile(
     if payload.full_name is not None:
         user.full_name = payload.full_name
 
+    if payload.state is not None:
+        user.state = payload.state
+
+    if payload.city is not None:
+        user.city = payload.city
+
+    if payload.address is not None:
+        user.address = payload.address
+
     db.commit()
     db.refresh(user)
     return user

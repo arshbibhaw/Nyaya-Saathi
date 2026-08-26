@@ -33,6 +33,9 @@ def init_db() -> None:
         ("users", "role", "VARCHAR(50) DEFAULT 'user'"),
         ("users", "preferred_language", "VARCHAR(50) DEFAULT 'en'"),
         ("users", "location", "VARCHAR(255)"),
+        ("users", "state", "VARCHAR(255)"),
+        ("users", "city", "VARCHAR(255)"),
+        ("users", "address", "VARCHAR(500)"),
         ("users", "created_at", "TIMESTAMP"),
         ("users", "updated_at", "TIMESTAMP"),
         ("cases", "title", "VARCHAR(500)"),
@@ -46,6 +49,7 @@ def init_db() -> None:
         ("cases", "status", "VARCHAR(50) DEFAULT 'ACTIVE'"),
         ("cases", "created_at", "TIMESTAMP"),
         ("cases", "updated_at", "TIMESTAMP"),
+        ("cases", "relevant_laws", "TEXT"),
     ]
     with engine.connect() as conn:
         for tbl, col, ctype in columns_to_add:

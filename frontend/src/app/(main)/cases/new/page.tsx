@@ -189,6 +189,7 @@ export default function NewCasePage() {
                       id="date"
                       type="date"
                       value={formData.date}
+                      max={new Date().toISOString().split("T")[0]}
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                     />
                   </div>
